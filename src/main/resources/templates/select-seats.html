@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Select Seats - ' + ${monthName} + ' 2026'">Select Seats</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Office Seat Booking System</h1>
+            <div class="user-info">
+                <span>Welcome, <strong th:text="${username}"></strong></span>
+                <a th:href="@{/calendar/{month}(month=${month})}" class="btn btn-secondary">Back to Calendar</a>
+                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2 th:text="'Select Seats for ' + ${monthName} + ' 2026'"></h2>
+            
+            <div class="selected-dates-info">
+                <h3>Selected Dates:</h3>
+                <div id="selectedDatesDisplay" class="selected-dates-list"></div>
+            </div>
+            
+            <div class="seat-selection-section">
+                <div th:each="floor : ${floors}" th:if="${floor.hasSeats}">
+                    <h3 th:text="'Floor ' + ${floor.floorNumber}"></h3>
+                    <p class="info-text">Select a seat for each date. Ground floor (Floor 0) has no seats.</p>
+                    
+                    <div class="seat-grid">
+                        <div th:each="seat : ${floor.seats}" 
+                             class="seat-item"
+                             th:data-seat-id="${seat}"
+                             th:data-floor="${floor.floorNumber}"
+                             th:onclick="'selectSeat(\'' + ${seat} + '\', ' + ${floor.floorNumber} + ')'">
+                            <span th:text="${seat}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="booking-assignments">
+                <h3>Date-Seat Assignments</h3>
+                <div id="assignmentsList" class="assignments-list"></div>
+                <button id="confirmBookingBtn" class="btn btn-primary" onclick="confirmBookings()" disabled>
+                    Confirm All Bookings
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const selectedDatesParam = '[[${selectedDates}]]';
+        const month = [[${month}]];
+        const selectedDates = selectedDatesParam ? selectedDatesParam.split(',') : [];
+        const dateSeatAssignments = {};
+        
+        // Display selected dates
+        const datesDisplay = document.getElementById('selectedDatesDisplay');
+        if (selectedDates.length > 0) {
+            datesDisplay.innerHTML = selectedDates.map(date => {
+                const dateObj = new Date(date);
+                return `<span class="date-tag">${dateObj.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</span>`;
+            }).join('');
+        } else {
+            datesDisplay.innerHTML = '<p class="no-selection">No dates selected. Please go back to calendar.</p>';
+        }
+        
+        function selectSeat(seatId, floor) {
+            if (selectedDates.length === 0) {
+                alert('No dates selected. Please go back to calendar.');
+                return;
+            }
+            
+            // Find first unassigned date
+            let unassignedDate = selectedDates.find(date => !dateSeatAssignments[date]);
+            
+            if (!unassignedDate) {
+                alert('All dates have been assigned. Please remove an assignment first or go back to select different dates.');
+                return;
+            }
+            
+            // Check if this seat is already assigned to another date
+            const existingAssignment = Object.entries(dateSeatAssignments).find(([date, seat]) => seat.seatId === seatId);
+            if (existingAssignment) {
+                if (confirm(`This seat is already assigned to ${existingAssignment[0]}. Do you want to reassign it?`)) {
+                    delete dateSeatAssignments[existingAssignment[0]];
+                } else {
+                    return;
+                }
+            }
+            
+            dateSeatAssignments[unassignedDate] = {seatId: seatId, floor: floor};
+            updateAssignmentsList();
+        }
+        
+        function removeAssignment(date) {
+            delete dateSeatAssignments[date];
+            updateAssignmentsList();
+        }
+        
+        function updateAssignmentsList() {
+            const assignmentsList = document.getElementById('assignmentsList');
+            const confirmBtn = document.getElementById('confirmBookingBtn');
+            
+            if (Object.keys(dateSeatAssignments).length === 0) {
+                assignmentsList.innerHTML = '<p class="no-selection">No assignments yet. Click on a seat to assign it to a date.</p>';
+                confirmBtn.disabled = true;
+            } else {
+                let html = '<table class="assignments-table"><thead><tr><th>Date</th><th>Floor</th><th>Seat</th><th>Action</th></tr></thead><tbody>';
+                
+                Object.entries(dateSeatAssignments).sort().forEach(([date, assignment]) => {
+                    const dateObj = new Date(date);
+                    html += `<tr>
+                        <td>${dateObj.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</td>
+                        <td>Floor ${assignment.floor}</td>
+                        <td>${assignment.seatId}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="removeAssignment('${date}')">Remove</button></td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                assignmentsList.innerHTML = html;
+                
+                // Enable confirm button if all dates are assigned
+                confirmBtn.disabled = selectedDates.length !== Object.keys(dateSeatAssignments).length;
+            }
+        }
+        
+        function confirmBookings() {
+            if (Object.keys(dateSeatAssignments).length !== selectedDates.length) {
+                alert('Please assign a seat to all selected dates before confirming.');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to confirm these bookings?')) {
+                return;
+            }
+            
+            // Submit each booking
+            let successCount = 0;
+            let errorCount = 0;
+            let promises = [];
+            
+            Object.entries(dateSeatAssignments).forEach(([date, assignment]) => {
+                const formData = new FormData();
+                formData.append('month', month);
+                formData.append('date', date);
+                formData.append('floor', assignment.floor);
+                formData.append('seatId', assignment.seatId);
+                
+                promises.push(
+                    fetch('/book', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.redirected) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    })
+                    .catch(() => {
+                        errorCount++;
+                    })
+                );
+            });
+            
+            Promise.all(promises).then(() => {
+                if (errorCount === 0) {
+                    window.location.href = `/calendar/${month}`;
+                } else {
+                    alert(`Some bookings failed. ${successCount} succeeded, ${errorCount} failed.`);
+                    window.location.href = `/calendar/${month}`;
+                }
+            });
+        }
+        
+        // Initialize
+        updateAssignmentsList();
+    </script>
+</body>
+</html>

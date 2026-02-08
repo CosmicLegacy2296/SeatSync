@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Calendar - ' + ${monthName} + ' 2026'">Calendar</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Office Seat Booking System</h1>
+            <div class="user-info">
+                <span>Welcome, <strong th:text="${username}"></strong></span>
+                <a th:href="@{/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
+                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2 th:text="${monthName} + ' 2026'"></h2>
+            
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+            
+            <div th:if="${validation}" class="validation-box" th:classappend="${validation.valid} ? 'valid' : 'invalid'">
+                <p th:text="${validation.message}"></p>
+            </div>
+            
+            <div class="booking-info">
+                <p><strong>Your Bookings:</strong> <span th:text="${#lists.size(userBookings)}"></span> / 10 (Minimum required: 6)</p>
+            </div>
+            
+            <div class="calendar-section">
+                <h3>Select Dates</h3>
+                <p class="info-text">Click on dates to select them. You can select up to 10 dates. After selecting dates, click "Select Seats" to choose your seats.</p>
+                
+                <div class="calendar-grid">
+                    <div class="calendar-day" th:each="date : ${availableDates}"
+                         th:data-date="${date.toString()}"
+                         th:classappend="${#lists.contains(userBookings.![date.toString()], date.toString())} ? 'booked' : ''"
+                         th:onclick="'toggleDate(\'' + ${date.toString()} + '\')'">
+                        <div class="day-number" th:text="${date.getDayOfMonth()}"></div>
+                        <div class="day-name" th:text="${date.getDayOfWeek().toString().substring(0,3)}"></div>
+                        <div th:if="${#lists.contains(userBookings.![date.toString()], date.toString())}" class="booked-badge">Booked</div>
+                    </div>
+                </div>
+                
+                <div class="selected-dates-section">
+                    <h4>Selected Dates:</h4>
+                    <div id="selectedDatesList" class="selected-dates-list"></div>
+                    <button id="selectSeatsBtn" class="btn btn-primary" onclick="proceedToSeatSelection()" disabled>
+                        Select Seats for Selected Dates
+                    </button>
+                </div>
+            </div>
+            
+            <div class="existing-bookings-section" th:if="${!#lists.isEmpty(userBookings)}">
+                <h3>Your Current Bookings</h3>
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Floor</th>
+                            <th>Seat</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="booking : ${userBookings}">
+                            <td th:text="${#temporals.format(booking.date, 'MMM dd, yyyy')}"></td>
+                            <td th:text="${booking.date.getDayOfWeek()}"></td>
+                            <td th:text="'Floor ' + ${booking.floor}"></td>
+                            <td th:text="${booking.seatId}"></td>
+                            <td>
+                                <form th:action="@{/delete-booking}" method="post" style="display: inline;">
+                                    <input type="hidden" name="month" th:value="${month}">
+                                    <input type="hidden" name="date" th:value="${booking.date.toString()}">
+                                    <input type="hidden" name="seatId" th:value="${booking.seatId}">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this booking?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let selectedDates = new Set();
+        const month = [[${month}]];
+        
+        // Load existing bookings
+        <th:block th:each="booking : ${userBookings}">
+            selectedDates.add('[[${booking.date.toString()}]]');
+        </th:block>
+        
+        function toggleDate(dateStr) {
+            const dateElement = document.querySelector(`[data-date="${dateStr}"]`);
+            const isBooked = dateElement.classList.contains('booked');
+            
+            if (isBooked) {
+                alert('This date is already booked. Please delete the booking first if you want to change it.');
+                return;
+            }
+            
+            if (selectedDates.has(dateStr)) {
+                selectedDates.delete(dateStr);
+                dateElement.classList.remove('selected');
+            } else {
+                if (selectedDates.size >= 10) {
+                    alert('Maximum booking limit reached. Please delete a booking to add another.');
+                    return;
+                }
+                selectedDates.add(dateStr);
+                dateElement.classList.add('selected');
+            }
+            
+            updateSelectedDatesList();
+        }
+        
+        function updateSelectedDatesList() {
+            const listDiv = document.getElementById('selectedDatesList');
+            const btn = document.getElementById('selectSeatsBtn');
+            
+            if (selectedDates.size === 0) {
+                listDiv.innerHTML = '<p class="no-selection">No dates selected</p>';
+                btn.disabled = true;
+            } else {
+                const datesArray = Array.from(selectedDates).sort();
+                listDiv.innerHTML = datesArray.map(date => {
+                    const dateObj = new Date(date);
+                    return `<span class="date-tag">${dateObj.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</span>`;
+                }).join('');
+                btn.disabled = false;
+            }
+        }
+        
+        function proceedToSeatSelection() {
+            if (selectedDates.size === 0) {
+                alert('Please select at least one date.');
+                return;
+            }
+            
+            const datesParam = Array.from(selectedDates).join(',');
+            window.location.href = `/select-seats/${month}?selectedDates=${encodeURIComponent(datesParam)}`;
+        }
+        
+        // Initialize
+        updateSelectedDatesList();
+        
+        // Mark already selected dates
+        selectedDates.forEach(dateStr => {
+            const dateElement = document.querySelector(`[data-date="${dateStr}"]`);
+            if (dateElement && !dateElement.classList.contains('booked')) {
+                dateElement.classList.add('selected');
+            }
+        });
+    </script>
+</body>
+</html>
