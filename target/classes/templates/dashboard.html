@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Office Seat Booking</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Office Seat Booking System</h1>
+            <div class="user-info">
+                <span>Welcome, <strong th:text="${username}"></strong></span>
+                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2>Select a Month (2026)</h2>
+            <p class="info-text">Please select a month to book your office seats. You need to book at least 6 days per month (maximum 10 days).</p>
+            
+            <div class="month-grid">
+                <a th:href="@{/calendar/2}" class="month-card">
+                    <div class="month-name">February</div>
+                </a>
+                <a th:href="@{/calendar/3}" class="month-card">
+                    <div class="month-name">March</div>
+                </a>
+                <a th:href="@{/calendar/4}" class="month-card">
+                    <div class="month-name">April</div>
+                </a>
+                <a th:href="@{/calendar/5}" class="month-card">
+                    <div class="month-name">May</div>
+                </a>
+                <a th:href="@{/calendar/6}" class="month-card">
+                    <div class="month-name">June</div>
+                </a>
+                <a th:href="@{/calendar/7}" class="month-card">
+                    <div class="month-name">July</div>
+                </a>
+                <a th:href="@{/calendar/8}" class="month-card">
+                    <div class="month-name">August</div>
+                </a>
+                <a th:href="@{/calendar/9}" class="month-card">
+                    <div class="month-name">September</div>
+                </a>
+                <a th:href="@{/calendar/10}" class="month-card">
+                    <div class="month-name">October</div>
+                </a>
+                <a th:href="@{/calendar/11}" class="month-card">
+                    <div class="month-name">November</div>
+                </a>
+                <a th:href="@{/calendar/12}" class="month-card">
+                    <div class="month-name">December</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
