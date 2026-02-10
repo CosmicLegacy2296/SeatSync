@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seat Booking - Admin Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <h1>Seat Booking</h1>
+            <h2>Administrator Access</h2>
+
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+            <form th:action="@{/admin-login}" method="post">
+                <div class="form-group">
+                    <label for="username">Admin username</label>
+                    <input type="text" id="username" name="username" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="securityCode">Security code</label>
+                    <input type="password" id="securityCode" name="securityCode" required autocomplete="off">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Sign in as Admin</button>
+            </form>
+
+            <div class="info-box">
+                <p><strong>Test Admin Credentials</strong></p>
+                <ul>
+                    <li>Username: <code>admin</code></li>
+                    <li>Password: <code>admin</code></li>
+                    <li>Security code: <code>SEC123</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

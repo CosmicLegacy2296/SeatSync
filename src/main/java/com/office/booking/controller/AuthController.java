@@ -19,7 +19,7 @@ public class AuthController {
 
     @GetMapping("/")
     public String index() {
-        return "redirect:/login";
+        return "landing";
     }
 
     @GetMapping("/login")
@@ -53,6 +53,6 @@ public class AuthController {
             userService.logout(username);
         }
         session.invalidate();
-        return "redirect:/login";
+        return "redirect:/";
     }
 }

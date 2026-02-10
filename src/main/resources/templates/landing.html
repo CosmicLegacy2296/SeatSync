@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seat Booking</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Seat Booking</h1>
+            <div class="user-info"></div>
+        </div>
+
+        <div class="content">
+            <div class="landing-hero">
+                <div class="landing-title">Seat Booking</div>
+                <p class="landing-subtitle">
+                    Please choose how you would like to sign in. Employees book their own workdays;
+                    administrators oversee all bookings and can manage reservations.
+                </p>
+
+                <div class="landing-options">
+                    <div class="landing-card">
+                        <h3>Employee login</h3>
+                        <p>
+                            Access your monthly calendar, choose your office days, and reserve a seat
+                            on the first or second floor.
+                        </p>
+                        <a th:href="@{/login}" class="btn btn-primary">
+                            CONTINUE AS EMPLOYEE
+                        </a>
+                    </div>
+
+                    <div class="landing-card">
+                        <h3>Admin login</h3>
+                        <p>
+                            View all employee bookings by month, review attendance, and remove
+                            reservations where required.
+                        </p>
+                        <a th:href="@{/admin-login}" class="btn btn-primary">
+                            CONTINUE AS ADMIN
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

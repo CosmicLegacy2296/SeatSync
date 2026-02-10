@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Admin - Bookings ' + ${monthName} + ' 2026'">Admin - Bookings</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Seat Booking - Admin</h1>
+            <div class="user-info">
+                <span>Signed in as <strong th:text="${username}"></strong></span>
+                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2 th:text="'Bookings Overview - ' + ${monthName} + ' 2026'"></h2>
+            <p class="info-text">
+                View all seat bookings for the selected month. You may remove bookings where necessary in line with policy.
+            </p>
+
+            <form th:action="@{/admin/bookings}" method="get" style="margin-bottom: 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <label for="month" style="font-size: 14px;">Month</label>
+                <select id="month" name="month" class="form-group-input" style="padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.6); background:#020617; color:#e5e7eb;">
+                    <option th:each="m : ${#numbers.sequence(1, 12)}"
+                            th:value="${m}"
+                            th:selected="${m} == ${month}"
+                            th:text="${#temporals.monthName(#temporals.create(2026, m, 1))}">
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-secondary">Change month</button>
+            </form>
+
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+            <div th:if="${#lists.isEmpty(bookings)}">
+                <p class="no-selection">No bookings recorded for this month.</p>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(bookings)}">
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Floor</th>
+                            <th>Seat</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="booking : ${bookings}">
+                            <td th:text="${booking.username}"></td>
+                            <td th:text="${#temporals.format(booking.date, 'MMM dd, yyyy')}"></td>
+                            <td th:text="${booking.date.getDayOfWeek()}"></td>
+                            <td th:text="'Floor ' + ${booking.floor}"></td>
+                            <td th:text="${booking.seatId}"></td>
+                            <td>
+                                <form th:action="@{/admin/delete-booking}" method="post" style="display: inline;">
+                                    <input type="hidden" name="month" th:value="${month}">
+                                    <input type="hidden" name="date" th:value="${booking.date.toString()}">
+                                    <input type="hidden" name="seatId" th:value="${booking.seatId}">
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Remove this booking for this employee?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Office Seat Booking - Login</title>
+    <title>Seat Booking - Employee Login</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
     <div class="container">
         <div class="login-box">
-            <h1>Office Seat Booking System</h1>
+            <h1>Seat Booking</h1>
             <h2>Employee Login</h2>
             
             <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
@@ -29,11 +29,10 @@
             </form>
             
             <div class="info-box">
-                <p><strong>Test Accounts:</strong></p>
+                <p><strong>Test Employee Accounts</strong></p>
                 <ul>
-                    <li>Username: user1, Password: password1</li>
-                    <li>Username: user2, Password: password2</li>
-                    <li>Username: admin, Password: admin</li>
+                    <li>Username: <code>user1</code>, Password: <code>password1</code></li>
+                    <li>Username: <code>user2</code>, Password: <code>password2</code></li>
                 </ul>
             </div>
         </div>

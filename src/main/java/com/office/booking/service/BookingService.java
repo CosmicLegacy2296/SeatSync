@@ -142,6 +142,42 @@ public class BookingService {
         return monthNames[month];
     }
 
+    // Admin & reporting helpers
+
+    /**
+     * Returns all bookings for a given month across all users.
+     */
+    public List<Booking> getBookingsForMonth(int month) {
+        return seatBookings.values().stream()
+                .filter(b -> b.getMonth() == month && b.getYear() == YEAR)
+                .sorted(Comparator
+                        .comparing(Booking::getDate)
+                        .thenComparing(Booking::getFloor)
+                        .thenComparing(Booking::getSeatId)
+                        .thenComparing(Booking::getUsername))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Admin-only deletion of a booking, regardless of owning user.
+     */
+    public BookingResult adminDeleteBooking(LocalDate date, String seatId) {
+        String seatKey = date.toString() + "-" + seatId;
+        Booking booking = seatBookings.get(seatKey);
+
+        if (booking == null) {
+            return new BookingResult(false, "Booking not found.");
+        }
+
+        List<Booking> bookingsForUser = userBookings.get(booking.getUsername());
+        if (bookingsForUser != null) {
+            bookingsForUser.remove(booking);
+        }
+
+        seatBookings.remove(seatKey);
+        return new BookingResult(true, "Booking deleted successfully.");
+    }
+
     public static class BookingResult {
         private final boolean success;
         private final String message;
