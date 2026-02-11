@@ -419,6 +419,13 @@ body {
     transform: scale(1.05);
 }
 
+.seat-item.seat-selected {
+    border-color: #eab308;
+    background: rgba(15, 23, 42, 0.98);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.7);
+    transform: scale(1.03);
+}
+
 .booking-assignments {
     margin-top: 40px;
     padding: 20px;

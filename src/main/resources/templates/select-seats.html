@@ -35,7 +35,7 @@
                              class="seat-item"
                              th:data-seat-id="${seat}"
                              th:data-floor="${floor.floorNumber}"
-                             onclick="selectSeat(this.getAttribute('data-seat-id'), this.getAttribute('data-floor'))">
+                             onclick="selectSeat(this, this.getAttribute('data-seat-id'), this.getAttribute('data-floor'))">
                             <span th:text="${seat}"></span>
                         </div>
                     </div>
@@ -69,10 +69,18 @@
             datesDisplay.innerHTML = '<p class="no-selection">No dates selected. Please go back to calendar.</p>';
         }
         
-        function selectSeat(seatId, floor) {
+        function selectSeat(element, seatId, floor) {
             if (selectedDates.length === 0) {
                 alert('No dates selected. Please go back to calendar.');
                 return;
+            }
+
+            // Visually mark the clicked seat as selected
+            document.querySelectorAll('.seat-item').forEach(el => {
+                el.classList.remove('seat-selected');
+            });
+            if (element) {
+                element.classList.add('seat-selected');
             }
             
             // Find first unassigned date
@@ -82,17 +90,7 @@
                 alert('All dates have been assigned. Please remove an assignment first or go back to select different dates.');
                 return;
             }
-            
-            // Check if this seat is already assigned to another date
-            const existingAssignment = Object.entries(dateSeatAssignments).find(([date, seat]) => seat.seatId === seatId);
-            if (existingAssignment) {
-                if (confirm(`This seat is already assigned to ${existingAssignment[0]}. Do you want to reassign it?`)) {
-                    delete dateSeatAssignments[existingAssignment[0]];
-                } else {
-                    return;
-                }
-            }
-            
+
             dateSeatAssignments[unassignedDate] = {seatId: seatId, floor: parseInt(floor)};
             updateAssignmentsList();
         }
