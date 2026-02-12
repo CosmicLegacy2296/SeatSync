@@ -116,10 +116,20 @@ public class BookingService {
 
     public Set<LocalDate> getBookedDatesForSeat(String seatId, int month) {
         return seatBookings.values().stream()
-                .filter(b -> b.getSeatId().equals(seatId) && 
-                            b.getMonth() == month && 
-                            b.getYear() == YEAR)
+                .filter(b -> b.getSeatId().equals(seatId) &&
+                             b.getMonth() == month &&
+                             b.getYear() == YEAR)
                 .map(Booking::getDate)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns all seat IDs booked for a specific date.
+     */
+    public Set<String> getBookedSeatsForDate(LocalDate date) {
+        return seatBookings.values().stream()
+                .filter(b -> b.getDate().equals(date))
+                .map(Booking::getSeatId)
                 .collect(Collectors.toSet());
     }
 

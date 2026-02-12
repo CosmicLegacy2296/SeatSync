@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -81,12 +83,28 @@ public class BookingController {
         List<Floor> floors = bookingService.getFloors();
         List<Booking> existingBookings = bookingService.getUserBookings(username, month);
 
+        // Determine primary selected date (first in list) to show real-time seat availability
+        Set<String> bookedSeats = Collections.emptySet();
+        if (selectedDates != null && !selectedDates.isBlank()) {
+            String[] parts = selectedDates.split(",");
+            if (parts.length > 0) {
+                String firstDate = parts[0].trim();
+                try {
+                    LocalDate date = LocalDate.parse(firstDate);
+                    bookedSeats = bookingService.getBookedSeatsForDate(date);
+                } catch (DateTimeParseException ignored) {
+                    // If the date cannot be parsed, fall back to empty set (no real-time markings)
+                }
+            }
+        }
+
         model.addAttribute("month", month);
         model.addAttribute("monthName", getMonthName(month));
         model.addAttribute("year", 2026);
         model.addAttribute("floors", floors);
         model.addAttribute("selectedDates", selectedDates);
         model.addAttribute("existingBookings", existingBookings);
+        model.addAttribute("bookedSeats", bookedSeats);
         model.addAttribute("username", username);
 
         return "select-seats";

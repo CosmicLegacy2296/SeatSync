@@ -33,6 +33,7 @@
                     <div class="seat-grid">
                         <div th:each="seat : ${floor.seats}" 
                              class="seat-item"
+                             th:classappend="${bookedSeats != null and bookedSeats.contains(seat)} ? ' booked-seat' : ''"
                              th:data-seat-id="${seat}"
                              th:data-floor="${floor.floorNumber}"
                              onclick="selectSeat(this, this.getAttribute('data-seat-id'), this.getAttribute('data-floor'))">
@@ -68,10 +69,29 @@
         } else {
             datesDisplay.innerHTML = '<p class="no-selection">No dates selected. Please go back to calendar.</p>';
         }
+
+        function formatDateLabel(dateStr) {
+            const [year, monthStr, dayStr] = dateStr.split('-').map(Number);
+            const d = new Date(year, monthStr - 1, dayStr);
+            return d.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
         
         function selectSeat(element, seatId, floor) {
             if (selectedDates.length === 0) {
                 alert('No dates selected. Please go back to calendar.');
+                return;
+            }
+
+            // If this seat is already booked for the selected date, do not allow selection
+            if (element && element.classList.contains('booked-seat')) {
+                const dateStr = selectedDates.length > 0 ? selectedDates[0].trim() : null;
+                const label = dateStr ? formatDateLabel(dateStr) : 'This date';
+                alert(`${label}, ${seatId} is already booked. Please select another seat for ${label}.`);
                 return;
             }
 
@@ -87,10 +107,26 @@
             let unassignedDate = selectedDates.find(date => !dateSeatAssignments[date]);
             
             if (!unassignedDate) {
-                alert('All dates have been assigned. Please remove an assignment first or go back to select different dates.');
+                // All selected dates already have a seat assigned locally.
+                // Allow user to change seat for the last selected date.
+                const targetDate = selectedDates[selectedDates.length - 1].trim();
+                const targetLabel = formatDateLabel(targetDate);
+                const confirmChange = confirm(
+                    `${targetLabel} already has a seat assigned.\n\n` +
+                    `Would you like to change your seat for ${targetLabel} to ${seatId}?`
+                );
+                if (!confirmChange) {
+                    // Do not change existing assignment
+                    return;
+                }
+
+                // Replace assignment for that date
+                dateSeatAssignments[targetDate] = {seatId: seatId, floor: parseInt(floor)};
+                updateAssignmentsList();
                 return;
             }
 
+            // Assign seat for the first available date
             dateSeatAssignments[unassignedDate] = {seatId: seatId, floor: parseInt(floor)};
             updateAssignmentsList();
         }

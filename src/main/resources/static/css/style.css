@@ -426,6 +426,28 @@ body {
     transform: scale(1.03);
 }
 
+/* Already-booked seats for the selected date (employee view) */
+.seat-item.booked-seat {
+    position: relative;
+    background-color: #ffcccc;
+    border-color: #b91c1c;
+    color: #7f1d1d;
+    cursor: not-allowed;
+}
+
+.seat-item.booked-seat::after {
+    content: "Booked";
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(127, 29, 29, 0.9);
+    color: #fee2e2;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
 .booking-assignments {
     margin-top: 40px;
     padding: 20px;
