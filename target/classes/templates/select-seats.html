@@ -28,7 +28,7 @@
             <div class="seat-selection-section">
                 <div th:each="floor : ${floors}" th:if="${floor.hasSeats}">
                     <h3 th:text="'Floor ' + ${floor.floorNumber}"></h3>
-                    <p class="info-text">Click on a seat to assign it to the next unassigned date.</p>
+                    <p class="info-text" th:text="${editMode} ? 'Click on a seat to change your booking for this date.' : 'Click on a seat to assign it to the next unassigned date.'"></p>
                     
                     <div class="seat-grid">
                         <div th:each="seat : ${floor.seats}" 
@@ -47,7 +47,7 @@
                 <h3>Date-Seat Assignments</h3>
                 <div id="assignmentsList" class="assignments-list"></div>
                 <button id="confirmBookingBtn" class="btn btn-primary" onclick="confirmBookings()" disabled>
-                    Confirm All Bookings
+                    <span th:text="${editMode} ? 'Update Booking' : 'Confirm All Bookings'"></span>
                 </button>
             </div>
         </div>
@@ -58,7 +58,18 @@
         const month = /*[[${month}]]*/ 2;
         const selectedDatesParam = /*[[${selectedDates}]]*/ '';
         const selectedDates = selectedDatesParam ? selectedDatesParam.split(',') : [];
+        const editMode = /*[[${editMode}]]*/ false;
+        const currentBooking = /*[[${currentBooking}]]*/ null;
         const dateSeatAssignments = {};
+        
+        // Preload current booking in edit mode
+        if (editMode && currentBooking && currentBooking.date && currentBooking.seatId) {
+            const dateStr = typeof currentBooking.date === 'string' ? currentBooking.date : currentBooking.date.toString();
+            dateSeatAssignments[dateStr] = {
+                seatId: currentBooking.seatId,
+                floor: currentBooking.floor
+            };
+        }
         
         // Display selected dates
         const datesDisplay = document.getElementById('selectedDatesDisplay');
@@ -108,7 +119,7 @@
             
             if (!unassignedDate) {
                 // All selected dates already have a seat assigned locally.
-                // Allow user to change seat for the last selected date.
+                // In edit mode or normal mode, allow user to change seat for the last selected date.
                 const targetDate = selectedDates[selectedDates.length - 1].trim();
                 const targetLabel = formatDateLabel(targetDate);
                 const confirmChange = confirm(
@@ -169,7 +180,11 @@
                 return;
             }
             
-            if (!confirm('Are you sure you want to confirm these bookings?')) {
+            const confirmMessage = editMode 
+                ? 'Are you sure you want to update this booking?'
+                : 'Are you sure you want to confirm these bookings?';
+            
+            if (!confirm(confirmMessage)) {
                 return;
             }
             
@@ -190,6 +205,9 @@
                     formData.append('date', date);
                     formData.append('floor', assignment.floor);
                     formData.append('seatId', assignment.seatId);
+                    if (editMode) {
+                        formData.append('editMode', 'true');
+                    }
                     
                     const response = await fetch('/book', {
                         method: 'POST',
@@ -219,6 +237,14 @@
         
         // Initialize
         updateAssignmentsList();
+        
+        // In edit mode, preselect the current seat visually
+        if (editMode && currentBooking && currentBooking.seatId) {
+            const currentSeatElement = document.querySelector(`[data-seat-id="${currentBooking.seatId}"]`);
+            if (currentSeatElement) {
+                currentSeatElement.classList.add('seat-selected');
+            }
+        }
     </script>
 </body>
 </html>

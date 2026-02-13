@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Select Seat - ' + ${#temporals.format(currentDate, 'MMM dd, yyyy')}">Select Seat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Office Seat Booking System</h1>
+            <div class="user-info">
+                <span>Welcome, <strong th:text="${username}"></strong></span>
+                <a th:href="@{/calendar/{month}(month=${month})}" class="btn btn-secondary">Cancel</a>
+                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2 th:text="'Select a seat for ' + ${#temporals.format(currentDate, 'EEEE, MMM dd, yyyy')}"></h2>
+            <p class="info-text">Choose one seat for this date. Booked seats are shown in red.</p>
+
+            <div class="seat-selection-section">
+                <div th:each="floor : ${floors}" th:if="${floor.hasSeats}">
+                    <h3 th:text="'Floor ' + ${floor.floorNumber}"></h3>
+                    <div class="seat-grid">
+                        <div th:each="seat : ${floor.seats}"
+                             class="seat-item"
+                             th:classappend="${(bookedSeats != null and bookedSeats.contains(seat) ? ' booked-seat' : '') + (existingSeatId != null and existingSeatId == seat ? ' seat-selected' : '')}"
+                             th:data-seat-id="${seat}"
+                             th:data-floor="${floor.floorNumber}"
+                             th:data-date-label="${#temporals.format(currentDate, 'EEEE, MMM dd, yyyy')}"
+                             onclick="handleSeatClick(this)">
+                            <span th:text="${seat}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="seatForm" th:action="@{/select-seat}" method="post">
+                <input type="hidden" name="index" th:value="${index}">
+                <input type="hidden" name="floor" id="hiddenFloor">
+                <input type="hidden" name="seatId" id="hiddenSeatId">
+
+                <div class="seat-nav-buttons">
+                    <a th:if="${index > 0}" th:href="@{/select-seat(index=${index} - 1)}" class="btn btn-secondary">Back</a>
+                    <span th:if="${index == 0}" class="btn-placeholder"></span>
+                    <button type="button" class="btn btn-primary" id="submitSeatBtn" onclick="submitSeat()" disabled>
+                        <span th:if="${index < totalDates - 1}">Next</span>
+                        <span th:if="${index == totalDates - 1}">Review Bookings</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const selectedSeat = {
+            floor: /*[[${existingFloor}]]*/ null,
+            seatId: /*[[${existingSeatId}]]*/ null
+        };
+
+        function handleSeatClick(el) {
+            if (el.classList.contains('booked-seat')) {
+                const dateLabel = el.getAttribute('data-date-label') || 'This date';
+                const seatId = el.getAttribute('data-seat-id');
+                alert(dateLabel + ', ' + seatId + ' is already booked. Please select another seat for ' + dateLabel + '.');
+                return;
+            }
+            document.querySelectorAll('.seat-item').forEach(e => {
+                e.classList.remove('seat-selected');
+            });
+            el.classList.add('seat-selected');
+            selectedSeat.floor = parseInt(el.getAttribute('data-floor'));
+            selectedSeat.seatId = el.getAttribute('data-seat-id');
+            document.getElementById('hiddenFloor').value = selectedSeat.floor;
+            document.getElementById('hiddenSeatId').value = selectedSeat.seatId;
+            document.getElementById('submitSeatBtn').disabled = false;
+        }
+
+        function submitSeat() {
+            if (!selectedSeat.floor || !selectedSeat.seatId) {
+                alert('Please select a seat.');
+                return;
+            }
+            document.getElementById('seatForm').submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (selectedSeat.floor != null && selectedSeat.seatId != null) {
+                document.getElementById('hiddenFloor').value = selectedSeat.floor;
+                document.getElementById('hiddenSeatId').value = selectedSeat.seatId;
+                document.getElementById('submitSeatBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -100,6 +100,62 @@ public class BookingService {
         return new BookingResult(true, "Booking deleted successfully!");
     }
 
+    public BookingResult updateBooking(String username, LocalDate date, int floor, String newSeatId) {
+        // Find existing booking for this user and date
+        List<Booking> userBookingsForMonth = getUserBookings(username, date.getMonthValue());
+        Booking existingBooking = userBookingsForMonth.stream()
+                .filter(b -> b.getDate().equals(date))
+                .findFirst()
+                .orElse(null);
+
+        if (existingBooking == null) {
+            return new BookingResult(false, "No existing booking found for this date.");
+        }
+
+        String oldSeatKey = date.toString() + "-" + existingBooking.getSeatId();
+        String newSeatKey = date.toString() + "-" + newSeatId;
+
+        // Check if new seat is already booked by someone else
+        if (seatBookings.containsKey(newSeatKey) && !seatBookings.get(newSeatKey).getUsername().equals(username)) {
+            return new BookingResult(false, "This seat is already booked for the selected date.");
+        }
+
+        // Validate floor has seats
+        Floor selectedFloor = floors.stream()
+                .filter(f -> f.getFloorNumber() == floor)
+                .findFirst()
+                .orElse(null);
+
+        if (selectedFloor == null || !selectedFloor.isHasSeats()) {
+            return new BookingResult(false, "Selected floor does not have seats.");
+        }
+
+        // Validate seat exists on floor
+        if (!selectedFloor.getSeats().contains(newSeatId)) {
+            return new BookingResult(false, "Invalid seat ID for the selected floor.");
+        }
+
+        // Remove old booking from seatBookings map
+        seatBookings.remove(oldSeatKey);
+
+        // Update booking
+        existingBooking.setFloor(floor);
+        existingBooking.setSeatId(newSeatId);
+
+        // Add updated booking to seatBookings map
+        seatBookings.put(newSeatKey, existingBooking);
+
+        return new BookingResult(true, "Booking updated successfully!");
+    }
+
+    public Booking getBookingForUserAndDate(String username, LocalDate date) {
+        List<Booking> userBookingsForMonth = getUserBookings(username, date.getMonthValue());
+        return userBookingsForMonth.stream()
+                .filter(b -> b.getDate().equals(date))
+                .findFirst()
+                .orElse(null);
+    }
+
     public BookingValidationResult validateUserBookings(String username, int month) {
         List<Booking> bookings = getUserBookings(username, month);
         int bookingCount = bookings.size();

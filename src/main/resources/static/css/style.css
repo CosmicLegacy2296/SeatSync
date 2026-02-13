@@ -542,6 +542,26 @@ body {
     width: 100%;
 }
 
+.seat-nav-buttons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.btn-placeholder {
+    display: inline-block;
+    min-width: 80px;
+}
+
+.review-buttons {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+    align-items: center;
+}
+
 @media (max-width: 768px) {
     .header {
         flex-direction: column;

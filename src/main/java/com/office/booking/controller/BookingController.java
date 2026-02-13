@@ -13,12 +13,16 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class BookingController {
+
+    private static final String SESSION_SELECTED_DATES = "selectedDatesList";
+    private static final String SESSION_SEAT_ASSIGNMENTS = "seatAssignments";
+    private static final String SESSION_BOOKING_MONTH = "bookingMonth";
+    private static final String SESSION_EDIT_MODE = "seatSelectionEditMode";
     @Autowired
     private BookingService bookingService;
 
@@ -66,48 +70,233 @@ public class BookingController {
         return "calendar";
     }
 
-    @GetMapping("/select-seats/{month}")
-    public String selectSeats(@PathVariable int month,
-                             @RequestParam(required = false) String selectedDates,
-                             HttpSession session,
-                             Model model) {
+    @PostMapping("/start-seat-selection")
+    public String startSeatSelection(@RequestParam int month,
+                                    @RequestParam String selectedDates,
+                                    HttpSession session,
+                                    RedirectAttributes redirectAttributes) {
         String username = (String) session.getAttribute("username");
         if (username == null) {
             return "redirect:/login";
         }
-
         if (month < 2 || month > 12) {
+            redirectAttributes.addFlashAttribute("error", "Invalid month");
             return "redirect:/dashboard";
         }
+        List<String> datesList = Arrays.stream(selectedDates.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toList());
+        if (datesList.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Please select at least one date");
+            return "redirect:/calendar/" + month;
+        }
+        session.setAttribute(SESSION_SELECTED_DATES, datesList);
+        session.setAttribute(SESSION_SEAT_ASSIGNMENTS, new LinkedHashMap<String, String>());
+        session.setAttribute(SESSION_BOOKING_MONTH, month);
+        session.setAttribute(SESSION_EDIT_MODE, false);
+        return "redirect:/select-seat?index=0";
+    }
 
+    @GetMapping("/start-seat-selection")
+    public String startSeatSelectionEdit(@RequestParam int month,
+                                        @RequestParam String editDate,
+                                        HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        try {
+            LocalDate.parse(editDate);
+        } catch (DateTimeParseException e) {
+            return "redirect:/calendar/" + month;
+        }
+        session.setAttribute(SESSION_SELECTED_DATES, List.of(editDate.trim()));
+        session.setAttribute(SESSION_SEAT_ASSIGNMENTS, new LinkedHashMap<String, String>());
+        session.setAttribute(SESSION_BOOKING_MONTH, month);
+        session.setAttribute(SESSION_EDIT_MODE, true);
+        return "redirect:/select-seat?index=0";
+    }
+
+    @SuppressWarnings("unchecked")
+    @GetMapping("/select-seat")
+    public String selectSeatSingle(@RequestParam int index,
+                                  HttpSession session,
+                                  Model model,
+                                  RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        List<String> selectedDates = (List<String>) session.getAttribute(SESSION_SELECTED_DATES);
+        if (selectedDates == null || selectedDates.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "No dates selected. Please start from the calendar.");
+            return "redirect:/dashboard";
+        }
+        if (index < 0 || index >= selectedDates.size()) {
+            return "redirect:/select-seat?index=0";
+        }
+        String dateStr = selectedDates.get(index);
+        LocalDate currentDate;
+        try {
+            currentDate = LocalDate.parse(dateStr);
+        } catch (DateTimeParseException e) {
+            return "redirect:/calendar/" + session.getAttribute(SESSION_BOOKING_MONTH);
+        }
+        Boolean editMode = (Boolean) session.getAttribute(SESSION_EDIT_MODE);
+        Booking currentBooking = Boolean.TRUE.equals(editMode)
+                ? bookingService.getBookingForUserAndDate(username, currentDate)
+                : null;
+        Set<String> bookedSeats = bookingService.getBookedSeatsForDate(currentDate);
+        if (currentBooking != null && currentBooking.getSeatId() != null) {
+            bookedSeats = new HashSet<>(bookedSeats);
+            bookedSeats.remove(currentBooking.getSeatId());
+        }
         List<Floor> floors = bookingService.getFloors();
-        List<Booking> existingBookings = bookingService.getUserBookings(username, month);
+        Map<String, String> assignments = (Map<String, String>) session.getAttribute(SESSION_SEAT_ASSIGNMENTS);
+        if (assignments == null) assignments = new LinkedHashMap<>();
+        String existingValue = assignments.get(dateStr);
+        Integer existingFloor = null;
+        String existingSeatId = null;
+        if (existingValue != null && existingValue.contains("|")) {
+            String[] parts = existingValue.split("\\|", 2);
+            try {
+                existingFloor = Integer.parseInt(parts[0]);
+                existingSeatId = parts[1];
+            } catch (NumberFormatException ignored) {}
+        } else if (currentBooking != null) {
+            existingFloor = currentBooking.getFloor();
+            existingSeatId = currentBooking.getSeatId();
+            assignments.put(dateStr, existingFloor + "|" + existingSeatId);
+            session.setAttribute(SESSION_SEAT_ASSIGNMENTS, assignments);
+        }
+        model.addAttribute("currentDate", currentDate);
+        model.addAttribute("dateStr", dateStr);
+        model.addAttribute("index", index);
+        model.addAttribute("totalDates", selectedDates.size());
+        model.addAttribute("bookedSeats", bookedSeats);
+        model.addAttribute("floors", floors);
+        model.addAttribute("username", username);
+        model.addAttribute("editMode", Boolean.TRUE.equals(editMode));
+        model.addAttribute("currentBooking", currentBooking);
+        model.addAttribute("existingSeatId", existingSeatId);
+        model.addAttribute("existingFloor", existingFloor);
+        model.addAttribute("month", session.getAttribute(SESSION_BOOKING_MONTH));
+        return "select-seat-single";
+    }
 
-        // Determine primary selected date (first in list) to show real-time seat availability
-        Set<String> bookedSeats = Collections.emptySet();
-        if (selectedDates != null && !selectedDates.isBlank()) {
-            String[] parts = selectedDates.split(",");
-            if (parts.length > 0) {
-                String firstDate = parts[0].trim();
-                try {
-                    LocalDate date = LocalDate.parse(firstDate);
-                    bookedSeats = bookingService.getBookedSeatsForDate(date);
-                } catch (DateTimeParseException ignored) {
-                    // If the date cannot be parsed, fall back to empty set (no real-time markings)
+    @SuppressWarnings("unchecked")
+    @PostMapping("/select-seat")
+    public String submitSeatSelection(@RequestParam int index,
+                                     @RequestParam int floor,
+                                     @RequestParam String seatId,
+                                     HttpSession session,
+                                     RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        List<String> selectedDates = (List<String>) session.getAttribute(SESSION_SELECTED_DATES);
+        if (selectedDates == null || index < 0 || index >= selectedDates.size()) {
+            redirectAttributes.addFlashAttribute("error", "Session expired. Please start from the calendar.");
+            return "redirect:/dashboard";
+        }
+        String dateStr = selectedDates.get(index);
+        Map<String, String> assignments = (Map<String, String>) session.getAttribute(SESSION_SEAT_ASSIGNMENTS);
+        if (assignments == null) {
+            assignments = new LinkedHashMap<>();
+            session.setAttribute(SESSION_SEAT_ASSIGNMENTS, assignments);
+        }
+        assignments.put(dateStr, floor + "|" + seatId);
+        session.setAttribute(SESSION_SEAT_ASSIGNMENTS, assignments);
+        if (index < selectedDates.size() - 1) {
+            return "redirect:/select-seat?index=" + (index + 1);
+        }
+        return "redirect:/review";
+    }
+
+    @SuppressWarnings("unchecked")
+    @GetMapping("/review")
+    public String reviewBookings(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        List<String> selectedDates = (List<String>) session.getAttribute(SESSION_SELECTED_DATES);
+        Map<String, String> assignments = (Map<String, String>) session.getAttribute(SESSION_SEAT_ASSIGNMENTS);
+        if (selectedDates == null || assignments == null || selectedDates.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "No bookings to review. Please start from the calendar.");
+            return "redirect:/dashboard";
+        }
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (String dateStr : selectedDates) {
+            String val = assignments.get(dateStr);
+            if (val == null || !val.contains("|")) continue;
+            String[] parts = val.split("\\|", 2);
+            try {
+                LocalDate d = LocalDate.parse(dateStr);
+                rows.add(Map.<String, Object>of(
+                    "date", d,
+                    "dateStr", dateStr,
+                    "floor", Integer.parseInt(parts[0]),
+                    "seatId", parts[1]
+                ));
+            } catch (Exception ignored) {}
+        }
+        Integer month = (Integer) session.getAttribute(SESSION_BOOKING_MONTH);
+        Boolean editMode = (Boolean) session.getAttribute(SESSION_EDIT_MODE);
+        model.addAttribute("rows", rows);
+        model.addAttribute("username", username);
+        model.addAttribute("month", month != null ? month : 2);
+        model.addAttribute("editMode", Boolean.TRUE.equals(editMode));
+        model.addAttribute("totalDates", selectedDates.size());
+        return "review";
+    }
+
+    @SuppressWarnings("unchecked")
+    @PostMapping("/confirm-booking")
+    public String confirmBooking(HttpSession session, RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        List<String> selectedDates = (List<String>) session.getAttribute(SESSION_SELECTED_DATES);
+        Map<String, String> assignments = (Map<String, String>) session.getAttribute(SESSION_SEAT_ASSIGNMENTS);
+        Integer month = (Integer) session.getAttribute(SESSION_BOOKING_MONTH);
+        Boolean editMode = (Boolean) session.getAttribute(SESSION_EDIT_MODE);
+        if (selectedDates == null || assignments == null || month == null) {
+            redirectAttributes.addFlashAttribute("error", "Session expired. Please start from the calendar.");
+            return "redirect:/dashboard";
+        }
+        for (String dateStr : selectedDates) {
+            String val = assignments.get(dateStr);
+            if (val == null || !val.contains("|")) continue;
+            String[] parts = val.split("\\|", 2);
+            try {
+                LocalDate date = LocalDate.parse(dateStr);
+                int floor = Integer.parseInt(parts[0]);
+                String seatId = parts[1];
+                BookingService.BookingResult result;
+                if (Boolean.TRUE.equals(editMode)) {
+                    result = bookingService.updateBooking(username, date, floor, seatId);
+                } else {
+                    result = bookingService.addBooking(username, date, floor, seatId);
                 }
+                if (!result.isSuccess()) {
+                    redirectAttributes.addFlashAttribute("error", result.getMessage());
+                    return "redirect:/review";
+                }
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Invalid booking data");
+                return "redirect:/review";
             }
         }
-
-        model.addAttribute("month", month);
-        model.addAttribute("monthName", getMonthName(month));
-        model.addAttribute("year", 2026);
-        model.addAttribute("floors", floors);
-        model.addAttribute("selectedDates", selectedDates);
-        model.addAttribute("existingBookings", existingBookings);
-        model.addAttribute("bookedSeats", bookedSeats);
-        model.addAttribute("username", username);
-
-        return "select-seats";
+        session.removeAttribute(SESSION_SELECTED_DATES);
+        session.removeAttribute(SESSION_SEAT_ASSIGNMENTS);
+        session.removeAttribute(SESSION_BOOKING_MONTH);
+        session.removeAttribute(SESSION_EDIT_MODE);
+        redirectAttributes.addFlashAttribute("success", "Bookings confirmed successfully!");
+        return "redirect:/calendar/" + month;
     }
 
     @PostMapping("/book")
@@ -115,6 +304,7 @@ public class BookingController {
                           @RequestParam String date,
                           @RequestParam int floor,
                           @RequestParam String seatId,
+                          @RequestParam(required = false) Boolean editMode,
                           HttpSession session,
                           RedirectAttributes redirectAttributes) {
         String username = (String) session.getAttribute("username");
@@ -123,7 +313,15 @@ public class BookingController {
         }
 
         LocalDate bookingDate = LocalDate.parse(date);
-        BookingService.BookingResult result = bookingService.addBooking(username, bookingDate, floor, seatId);
+        BookingService.BookingResult result;
+
+        if (Boolean.TRUE.equals(editMode)) {
+            // Update existing booking
+            result = bookingService.updateBooking(username, bookingDate, floor, seatId);
+        } else {
+            // Create new booking
+            result = bookingService.addBooking(username, bookingDate, floor, seatId);
+        }
 
         if (result.isSuccess()) {
             redirectAttributes.addFlashAttribute("success", result.getMessage());

@@ -95,19 +95,15 @@
         
         let selectedDates = new Set();
         
-        // Load existing bookings into the selection set
-        if (userBookings) {
-            userBookings.forEach(b => {
-                if (b.date) selectedDates.add(typeof b.date === 'string' ? b.date : b.date.toString());
-            });
-        }
-        
         function toggleDate(dateStr) {
             const dateElement = document.querySelector(`[data-date="${dateStr}"]`);
             if (!dateElement) return;
 
             if (dateElement.classList.contains('booked')) {
-                alert('This date is already booked.');
+                const confirmEdit = confirm('Would you like to edit this date?');
+                if (confirmEdit) {
+                    window.location.href = `/start-seat-selection?month=${month}&editDate=${encodeURIComponent(dateStr)}`;
+                }
                 return;
             }
             
@@ -141,15 +137,25 @@
         
         function proceedToSeatSelection() {
             const datesParam = Array.from(selectedDates).join(',');
-            window.location.href = `/select-seats/${month}?selectedDates=${encodeURIComponent(datesParam)}`;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/start-seat-selection';
+            const monthInput = document.createElement('input');
+            monthInput.type = 'hidden';
+            monthInput.name = 'month';
+            monthInput.value = month;
+            const datesInput = document.createElement('input');
+            datesInput.type = 'hidden';
+            datesInput.name = 'selectedDates';
+            datesInput.value = datesParam;
+            form.appendChild(monthInput);
+            form.appendChild(datesInput);
+            document.body.appendChild(form);
+            form.submit();
         }
 
-        // Run on load
+        // Run on load - initialize with empty selection state
         updateSelectedDatesList();
-        selectedDates.forEach(d => {
-            const el = document.querySelector(`[data-date="${d}"]`);
-            if (el && !el.classList.contains('booked')) el.classList.add('selected');
-        });
     </script>
 </body>
 </html>
