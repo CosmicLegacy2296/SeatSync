@@ -12,10 +12,16 @@ import java.util.stream.Collectors;
 @Service
 public class BookingService {
     private static final int MIN_REQUIRED_DAYS = 6;
-    private static final int MAX_ALLOWED_DAYS = 10;
+    private static final int DEFAULT_MAX_DAYS = 10;
     private static final int YEAR = 2026;
 
     private final Map<String, List<Booking>> userBookings = new ConcurrentHashMap<>();
+    private com.office.booking.service.ExtensionRequestService extensionRequestService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setExtensionRequestService(com.office.booking.service.ExtensionRequestService extensionRequestService) {
+        this.extensionRequestService = extensionRequestService;
+    }
     private final Map<String, Booking> seatBookings = new ConcurrentHashMap<>(); // Key: date-seatId
     private final List<Floor> floors;
 
@@ -58,8 +64,11 @@ public class BookingService {
             return new BookingResult(false, "You already have a booking for this date.");
         }
 
-        // Check maximum booking limit (10 days)
-        if (userBookingsForMonth.size() >= MAX_ALLOWED_DAYS) {
+        // Check maximum booking limit (month-specific: default 10, or approved extension for this month/year)
+        int maxAllowed = extensionRequestService != null
+                ? extensionRequestService.getApprovedMaxForUserMonthYear(username, date.getMonthValue(), date.getYear())
+                : DEFAULT_MAX_DAYS;
+        if (userBookingsForMonth.size() >= maxAllowed) {
             return new BookingResult(false, "Maximum booking limit reached. Please delete a booking to add another.");
         }
 

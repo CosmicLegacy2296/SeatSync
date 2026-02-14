@@ -17,6 +17,7 @@ public class UserService {
         // Initialize with some default users for testing
         createUser("user1", "password1", "John Doe");
         createUser("user2", "password2", "Jane Smith");
+        createUser("user3", "password3", "User Three");
         createUser("admin", "admin", "Admin User");
     }
 
@@ -54,5 +55,17 @@ public class UserService {
 
     public boolean isUserLoggedIn(String username) {
         return loggedInUsers.containsKey(username);
+    }
+
+    public void setMaxAllowedDays(String username, int maxAllowedDays) {
+        User user = users.get(username);
+        if (user != null) {
+            user.setMaxAllowedDays(maxAllowedDays);
+        }
+    }
+
+    public int getMaxAllowedDays(String username) {
+        User user = users.get(username);
+        return user != null ? user.getMaxAllowedDays() : 10;
     }
 }

@@ -1,7 +1,9 @@
 package com.office.booking.controller;
 
 import com.office.booking.model.Booking;
+import com.office.booking.model.BookingExtensionRequest;
 import com.office.booking.service.BookingService;
+import com.office.booking.service.ExtensionRequestService;
 import com.office.booking.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class AdminController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private ExtensionRequestService extensionRequestService;
 
     @GetMapping("/admin-login")
     public String adminLoginPage(HttpSession session) {
@@ -78,11 +83,13 @@ public class AdminController {
         int selectedMonth = (month == null || month < 1 || month > 12) ? 2 : month;
 
         List<Booking> bookings = bookingService.getBookingsForMonth(selectedMonth);
+        List<BookingExtensionRequest> pendingExtensionRequests = extensionRequestService.findPendingRequests();
 
         model.addAttribute("username", username);
         model.addAttribute("month", selectedMonth);
         model.addAttribute("monthName", getMonthName(selectedMonth));
         model.addAttribute("bookings", bookings);
+        model.addAttribute("pendingExtensionRequests", pendingExtensionRequests);
 
         return "admin-bookings";
     }
@@ -110,6 +117,42 @@ public class AdminController {
         }
 
         return "redirect:/admin/bookings?month=" + month;
+    }
+
+    @PostMapping("/admin/approve-extension")
+    public String approveExtension(@RequestParam long id, HttpSession session, RedirectAttributes redirectAttributes) {
+        String role = (String) session.getAttribute("role");
+        if (!"ADMIN".equals(role)) {
+            return "redirect:/admin-login";
+        }
+        var reqOpt = extensionRequestService.findById(id);
+        if (reqOpt.isEmpty() || !BookingExtensionRequest.PENDING.equals(reqOpt.get().getStatus())) {
+            redirectAttributes.addFlashAttribute("error", "Request not found or already processed.");
+        } else {
+            BookingExtensionRequest req = reqOpt.get();
+            req.setStatus(BookingExtensionRequest.APPROVED);
+            extensionRequestService.save(req);
+            redirectAttributes.addFlashAttribute("success", "Extension approved for " + req.getUsername() + " (" + getMonthName(req.getMonth()) + " " + req.getYear() + ").");
+        }
+        return "redirect:/admin/bookings";
+    }
+
+    @PostMapping("/admin/reject-extension")
+    public String rejectExtension(@RequestParam long id, HttpSession session, RedirectAttributes redirectAttributes) {
+        String role = (String) session.getAttribute("role");
+        if (!"ADMIN".equals(role)) {
+            return "redirect:/admin-login";
+        }
+        var reqOpt = extensionRequestService.findById(id);
+        if (reqOpt.isEmpty() || !BookingExtensionRequest.PENDING.equals(reqOpt.get().getStatus())) {
+            redirectAttributes.addFlashAttribute("error", "Request not found or already processed.");
+        } else {
+            BookingExtensionRequest req = reqOpt.get();
+            req.setStatus(BookingExtensionRequest.REJECTED);
+            extensionRequestService.save(req);
+            redirectAttributes.addFlashAttribute("success", "Extension request rejected.");
+        }
+        return "redirect:/admin/bookings";
     }
 
     private String getMonthName(int month) {

@@ -37,6 +37,35 @@
             <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
             <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
+            <div th:if="${!#lists.isEmpty(pendingExtensionRequests)}" class="extension-requests" style="margin-bottom:24px;">
+                <h3>Extension Requests</h3>
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Month</th>
+                            <th>Requested Days</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="req : ${pendingExtensionRequests}">
+                            <td th:text="${req.username}"></td>
+                            <td th:text="|${#temporals.monthName(#temporals.create(req.year, req.month, 1))} ${req.year}|"></td>
+                            <td th:text="${req.requestedDays}"></td>
+                            <td>
+                                <form th:action="@{/admin/approve-extension(id=${req.id})}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-primary btn-sm action-btn">Approve</button>
+                                </form>
+                                <form th:action="@{/admin/reject-extension(id=${req.id})}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm action-btn">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <div th:if="${#lists.isEmpty(bookings)}">
                 <p class="no-selection">No bookings recorded for this month.</p>
             </div>

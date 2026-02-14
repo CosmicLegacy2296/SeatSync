@@ -1,8 +1,10 @@
 package com.office.booking.controller;
 
 import com.office.booking.model.Booking;
+import com.office.booking.model.BookingExtensionRequest;
 import com.office.booking.model.Floor;
 import com.office.booking.service.BookingService;
+import com.office.booking.service.ExtensionRequestService;
 import com.office.booking.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ public class BookingController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ExtensionRequestService extensionRequestService;
 
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
@@ -66,6 +71,8 @@ public class BookingController {
         model.addAttribute("userBookings", userBookings);
         model.addAttribute("validation", validation);
         model.addAttribute("username", username);
+        model.addAttribute("maxAllowedDays", extensionRequestService.getApprovedMaxForUserMonthYear(username, month, 2026));
+        model.addAttribute("daysInMonth", java.time.Year.of(2026).atMonth(month).lengthOfMonth());
 
         return "calendar";
     }
@@ -89,6 +96,11 @@ public class BookingController {
                 .collect(Collectors.toList());
         if (datesList.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Please select at least one date");
+            return "redirect:/calendar/" + month;
+        }
+        int maxAllowed = extensionRequestService.getApprovedMaxForUserMonthYear(username, month, 2026);
+        if (datesList.size() > maxAllowed) {
+            redirectAttributes.addFlashAttribute("error", "You may select at most " + maxAllowed + " days.");
             return "redirect:/calendar/" + month;
         }
         session.setAttribute(SESSION_SELECTED_DATES, datesList);
@@ -352,6 +364,43 @@ public class BookingController {
             redirectAttributes.addFlashAttribute("error", result.getMessage());
         }
 
+        return "redirect:/calendar/" + month;
+    }
+
+    @PostMapping("/request-extension")
+    public String requestExtension(@RequestParam int month,
+                                  @RequestParam int year,
+                                  @RequestParam int requestedDays,
+                                  HttpSession session,
+                                  RedirectAttributes redirectAttributes) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return "redirect:/login";
+        }
+        if (month < 2 || month > 12) {
+            redirectAttributes.addFlashAttribute("error", "Invalid month");
+            return "redirect:/calendar/" + month;
+        }
+        if (requestedDays <= 10) {
+            redirectAttributes.addFlashAttribute("error", "Please enter a valid number of days for this month.");
+            return "redirect:/calendar/" + month;
+        }
+        int daysInMonth = java.time.Year.of(year).atMonth(month).lengthOfMonth();
+        if (requestedDays > daysInMonth) {
+            redirectAttributes.addFlashAttribute("error", "Please enter a valid number of days for this month.");
+            return "redirect:/calendar/" + month;
+        }
+        if (extensionRequestService.getApprovedMaxForUserMonthYear(username, month, year) != 10) {
+            redirectAttributes.addFlashAttribute("error", "You already have an approved extension for this month.");
+            return "redirect:/calendar/" + month;
+        }
+        if (extensionRequestService.hasPendingRequest(username, month, year)) {
+            redirectAttributes.addFlashAttribute("error", "You already have a pending request for this month.");
+            return "redirect:/calendar/" + month;
+        }
+        BookingExtensionRequest req = new BookingExtensionRequest(username, requestedDays, month, year);
+        extensionRequestService.save(req);
+        redirectAttributes.addFlashAttribute("success", "Request submitted to admin for approval.");
         return "redirect:/calendar/" + month;
     }
 

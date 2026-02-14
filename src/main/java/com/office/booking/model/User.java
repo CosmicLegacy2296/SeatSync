@@ -7,6 +7,7 @@ public class User {
     private String password;
     private String name;
     private boolean loggedIn;
+    private int maxAllowedDays = 10;
 
     public User() {
     }
@@ -16,6 +17,7 @@ public class User {
         this.password = password;
         this.name = name;
         this.loggedIn = false;
+        this.maxAllowedDays = 10;
     }
 
     public String getUsername() {
@@ -48,6 +50,14 @@ public class User {
 
     public void setLoggedIn(boolean loggedIn) {
         this.loggedIn = loggedIn;
+    }
+
+    public int getMaxAllowedDays() {
+        return maxAllowedDays;
+    }
+
+    public void setMaxAllowedDays(int maxAllowedDays) {
+        this.maxAllowedDays = maxAllowedDays;
     }
 
     @Override

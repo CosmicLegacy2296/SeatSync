@@ -27,13 +27,31 @@
                 <p th:text="${validation.message}"></p>
             </div>
             
-            <div class="booking-info">
-                <p><strong>Your Bookings:</strong> <span th:text="${#lists.size(userBookings)}"></span> / 10 (Minimum required: 6)</p>
+            <div class="booking-info" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <p><strong>Your Bookings:</strong> <span th:text="${#lists.size(userBookings)}"></span> / <span th:text="${maxAllowedDays}"></span> (Minimum required: 6)</p>
+                <button th:if="${maxAllowedDays == 10}" type="button" class="btn btn-secondary" onclick="document.getElementById('extensionModal').style.display='flex'">Request More Days</button>
+            </div>
+
+            <div id="extensionModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; flex-direction:column;" onclick="if(event.target===this) this.style.display='none'">
+                <div style="background:#0f172a; padding:24px; border-radius:12px; min-width:320px;">
+                    <h3 style="margin-top:0;">Request Extension</h3>
+                    <form th:action="@{/request-extension}" method="post">
+                        <input type="hidden" name="month" th:value="${month}">
+                        <input type="hidden" name="year" th:value="${year}">
+                        <label for="requestedDays" style="display:block; margin-bottom:8px;">Number of days requested</label>
+                        <input type="number" id="requestedDays" name="requestedDays" th:min="11" th:max="${daysInMonth}" required style="width:100%; padding:8px; margin-bottom:12px; border-radius:6px; border:1px solid rgba(148,163,184,0.6); background:#020617; color:#e5e7eb;">
+                        <p class="info-text" style="margin-bottom:12px; font-size:13px;">Must be &gt; 10 and &le; <span th:text="${daysInMonth}"></span> (days in month)</p>
+                        <div style="display:flex; gap:8px;">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('extensionModal').style.display='none'">Cancel</button>
+                        </div>
+                    </form>
+                </div>
             </div>
             
             <div class="calendar-section">
                 <h3>Select Dates</h3>
-                <p class="info-text">Click on dates to select them. You can select up to 10 dates.</p>
+                <p class="info-text">Click on dates to select them. You can select up to <span th:text="${maxAllowedDays}"></span> dates.</p>
                 
                 <div class="calendar-grid">
                     <div class="calendar-day" th:each="date : ${availableDates}"
@@ -91,6 +109,7 @@
     <script th:inline="javascript">
         /* Thymeleaf provides these variables safely to JS */
         const month = /*[[${month}]]*/ 2;
+        const maxAllowedDays = /*[[${maxAllowedDays}]]*/ 10;
         const userBookings = /*[[${userBookings}]]*/ [];
         
         let selectedDates = new Set();
@@ -111,8 +130,8 @@
                 selectedDates.delete(dateStr);
                 dateElement.classList.remove('selected');
             } else {
-                if (selectedDates.size >= 10) {
-                    alert('Limit: 10 dates.');
+                if (selectedDates.size >= maxAllowedDays) {
+                    alert('Limit: ' + maxAllowedDays + ' dates.');
                     return;
                 }
                 selectedDates.add(dateStr);
