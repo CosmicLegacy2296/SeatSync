@@ -1,4 +1,4 @@
-# Office Seat Booking System
+# Seat Sync
 
 A Java-based web application for employees to book office seats. Built with Spring Boot and HTML/Thymeleaf.
 

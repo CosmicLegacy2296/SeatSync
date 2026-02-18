@@ -15,7 +15,7 @@
     <groupId>com.office</groupId>
     <artifactId>seat-booking-system</artifactId>
     <version>1.0.0</version>
-    <name>Office Seat Booking System</name>
+    <name>Seat Sync</name>
     <description>Employee seat booking system for office</description>
 
     <properties>

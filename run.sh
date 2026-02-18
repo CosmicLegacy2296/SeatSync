@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Building and running Office Seat Booking System..."
+echo "Building and running Seat Sync..."
 echo ""
 
 # Check if Maven is installed

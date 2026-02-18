@@ -1,4 +1,4 @@
-# How to Run the Office Seat Booking System
+# How to Run the Seat Sync
 
 ## Prerequisites
 
