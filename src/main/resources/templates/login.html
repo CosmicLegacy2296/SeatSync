@@ -1,41 +1,98 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seat Sync - Employee Login</title>
+    <title>SeatSync — Employee Portal Login</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
-        <div class="login-box">
-            <h1>Seat Sync</h1>
-            <h2>Employee Login</h2>
-            
-            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
-            
+    <div class="login-wrapper">
+        <div class="card login-box" th:classappend="${error != null} ? 'input-error' : ''">
+            <div class="login-header">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <h1 class="logo-text">SeatSync</h1>
+                <p>Employee Portal Login</p>
+            </div>
+
+            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span th:text="${error}">Invalid credentials</span>
+            </div>
+
             <form th:action="@{/login}" method="post">
                 <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required>
+                    <label class="form-label" for="username">Username or Email</label>
+                    <input class="form-control" type="text" id="username" name="username" placeholder="e.g. user1" required autocomplete="username">
                 </div>
-                
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
+
+                <div class="form-group" style="position: relative;">
+                    <label class="form-label" for="password">Password</label>
+                    <input class="form-control" type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 48px;">
+                    <button type="button" id="togglePassword" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <svg id="eyeOpenIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg id="eyeClosedIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
                 </div>
-                
-                <button type="submit" class="btn btn-primary">Login</button>
+
+                <div class="form-footer">
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" class="form-checkbox" name="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a th:href="@{/register}" class="form-link">Register company</a>
+                    <a th:href="@{/employee-signup}" class="form-link" style="font-size: 13px; margin-left: 12px;">Don't Have an Account? Employee Sign Up</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
             </form>
+
+            <div class="info-box" style="margin-top: 24px; font-size: 13px;">
+                <div style="font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Default Test Accounts:</div>
+                <div style="display: flex; flex-direction: column; gap: 4px; color: var(--text-secondary);">
+                    <div>Employee 1: <code>user1</code> / <code>password1</code></div>
+                    <div>Employee 2: <code>user2</code> / <code>password2</code></div>
+                </div>
+            </div>
             
-            <div class="info-box">
-                <p><strong>Test Employee Accounts</strong></p>
-                <ul>
-                    <li>Username: <code>user1</code>, Password: <code>password1</code></li>
-                    <li>Username: <code>user2</code>, Password: <code>password2</code></li>
-                </ul>
+            <div style="text-align: center; margin-top: 24px;">
+                <a th:href="@{/}" class="form-link" style="font-size: 14px;">&larr; Back to Landing Page</a>
             </div>
         </div>
     </div>
+
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+        const eyeOpenIcon = document.querySelector('#eyeOpenIcon');
+        const eyeClosedIcon = document.querySelector('#eyeClosedIcon');
+
+        togglePassword.addEventListener('click', function () {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            
+            if (type === 'password') {
+                eyeOpenIcon.style.display = 'block';
+                eyeClosedIcon.style.display = 'none';
+            } else {
+                eyeOpenIcon.style.display = 'none';
+                eyeClosedIcon.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

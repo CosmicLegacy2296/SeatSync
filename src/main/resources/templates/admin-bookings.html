@@ -1,111 +1,194 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'Admin - Bookings ' + ${monthName} + ' 2026'">Admin - Bookings</title>
+    <title th:text="'Admin Console - Bookings ' + ${monthName} + ' 2026'">Admin Console</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Seat Sync - Admin</h1>
-            <div class="user-info">
-                <span>Signed in as <strong th:text="${username}"></strong></span>
-                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a th:href="@{/admin/bookings}" class="sidebar-logo">
+                <div class="logo-icon" style="background: linear-gradient(135deg, var(--accent-secondary), var(--accent-warn));">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">SeatSync Admin</span>
+            </a>
+            
+            <nav class="sidebar-nav">
+                <a th:href="@{/admin/bookings}" class="nav-link active">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>All Bookings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar" style="color: var(--accent-warn);">A</div>
+                    <div class="user-details">
+                        <span class="user-name" th:text="${username}">admin</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                </div>
+                <a th:href="@{/logout}" class="btn btn-secondary btn-sm btn-block" style="margin-top: 12px; justify-content: center;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Log Out</span>
+                </a>
             </div>
-        </div>
+        </aside>
 
-        <div class="content">
-            <h2 th:text="'Bookings Overview - ' + ${monthName} + ' 2026'"></h2>
-            <p class="info-text">
-                View all seat bookings for the selected month. You may remove bookings where necessary in line with policy.
-            </p>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <div class="flex-between" style="margin-bottom: 24px;">
+                    <div>
+                        <h1 style="font-size: 32px;">Overview &mdash; <span class="text-gradient" th:text="${monthName} + ' 2026'">Month 2026</span></h1>
+                        <p style="color: var(--text-secondary); margin-top: 8px;">Review company-wide desk bookings and manage employee extension requests.</p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <div class="month-stats-badge valid" style="margin-top: 0; padding: 10px 16px; font-size: 14px;">
+                            <strong th:text="${totalBookings}">0</strong> Bookings this month
+                        </div>
+                        <a th:href="@{/admin/export-csv(month=${month})}" class="btn btn-primary" th:if="${totalBookings > 0}">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export CSV
+                        </a>
+                    </div>
+                </div>
 
-            <form th:action="@{/admin/bookings}" method="get" style="margin-bottom: 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <label for="month" style="font-size: 14px;">Month</label>
-                <select id="month" name="month" class="form-group-input" style="padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.6); background:#020617; color:#e5e7eb;">
-                    <option th:each="m : ${#numbers.sequence(1, 12)}"
-                            th:value="${m}"
-                            th:selected="${m} == ${month}"
-                            th:text="${#temporals.monthName(#temporals.create(2026, m, 1))}">
-                    </option>
-                </select>
-                <button type="submit" class="btn btn-secondary">Change month</button>
-            </form>
+                <!-- Alerts -->
+                <div th:if="${success}" class="alert alert-success">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span th:text="${success}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span th:text="${error}"></span>
+                </div>
 
-            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                <!-- Month Tabs -->
+                <div style="display: flex; gap: 8px; margin-bottom: 32px; overflow-x: auto; padding-bottom: 8px;" th:with="monthNames=${ {'', '', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'} }">
+                    <a th:each="m : ${#numbers.sequence(2, 12)}"
+                       th:href="@{/admin/bookings(month=${m})}"
+                       class="floor-tab"
+                       th:classappend="${m} == ${month} ? 'active' : ''"
+                       th:text="${monthNames[m]}">
+                    </a>
+                </div>
 
-            <div th:if="${!#lists.isEmpty(pendingExtensionRequests)}" class="extension-requests" style="margin-bottom:24px;">
-                <h3>Extension Requests</h3>
-                <table class="bookings-table">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Month</th>
-                            <th>Requested Days</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="req : ${pendingExtensionRequests}">
-                            <td th:text="${req.username}"></td>
-                            <td th:text="|${#temporals.monthName(#temporals.create(req.year, req.month, 1))} ${req.year}|"></td>
-                            <td th:text="${req.requestedDays}"></td>
-                            <td>
-                                <form th:action="@{/admin/approve-extension(id=${req.id})}" method="post" style="display:inline;">
-                                    <button type="submit" class="btn btn-primary btn-sm action-btn">Approve</button>
-                                </form>
-                                <form th:action="@{/admin/reject-extension(id=${req.id})}" method="post" style="display:inline;">
-                                    <button type="submit" class="btn btn-danger btn-sm action-btn">Reject</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Extension Requests -->
+                <div th:if="${!#lists.isEmpty(pendingExtensionRequests)}" class="table-container" style="margin-bottom: 32px; border-color: var(--accent-warn);">
+                    <div style="padding: 24px 24px 16px; display: flex; align-items: center; gap: 12px;">
+                        <svg width="24" height="24" fill="none" stroke="var(--accent-warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <h3 style="font-size: 20px; color: var(--accent-warn); margin: 0;">Pending Extension Requests</h3>
+                    </div>
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Month</th>
+                                <th>Requested Total Days</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="req : ${pendingExtensionRequests}">
+                                <td><strong th:text="${req.username}"></strong></td>
+                                <td th:text="|${#temporals.monthName(#temporals.create(req.year, req.month, 1))} ${req.year}|"></td>
+                                <td><span class="month-stats-badge invalid" style="margin: 0;" th:text="${req.requestedDays} + ' days'"></span></td>
+                                <td style="text-align: right;">
+                                    <form th:action="@{/admin/approve-extension(id=${req.id})}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-primary" style="padding: 6px 12px;">Approve</button>
+                                    </form>
+                                    <form th:action="@{/admin/reject-extension(id=${req.id})}" method="post" style="display:inline; margin-left: 8px;">
+                                        <button type="submit" class="btn btn-sm btn-danger" style="padding: 6px 12px;">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bookings Table -->
+                <div class="table-container">
+                    <div th:if="${#lists.isEmpty(bookings)}" style="padding: 48px 24px; text-align: center; color: var(--text-muted);">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-bottom: 16px; opacity: 0.5;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <p style="font-size: 16px;">No bookings recorded for this month.</p>
+                    </div>
+
+                    <table th:if="${!#lists.isEmpty(bookings)}" class="styled-table" style="position: relative;">
+                        <thead style="position: sticky; top: 0; background-color: var(--bg-card); z-index: 10;">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Date</th>
+                                <th>Day</th>
+                                <th>Floor</th>
+                                <th>Seat</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="booking : ${bookings}" th:classappend="'floor-' + ${booking.floor} + '-row'">
+                                <td><strong th:text="${booking.username}"></strong></td>
+                                <td><span th:text="${#temporals.format(booking.date, 'MMM dd, yyyy')}"></span></td>
+                                <td style="color: var(--text-secondary);" th:text="${booking.date.getDayOfWeek()}"></td>
+                                <td><span class="month-stats-badge" style="margin: 0; padding: 4px 8px; font-size: 12px;" th:text="'Floor ' + ${booking.floor}"></span></td>
+                                <td><code style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px;" th:text="${booking.seatId}"></code></td>
+                                <td style="text-align: right;">
+                                    <form th:action="@{/admin/delete-booking}" method="post" style="display: inline;">
+                                        <input type="hidden" name="month" th:value="${month}">
+                                        <input type="hidden" name="date" th:value="${booking.date.toString()}">
+                                        <input type="hidden" name="seatId" th:value="${booking.seatId}">
+                                        <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--color-danger); border-color: rgba(239, 68, 68, 0.3);"
+                                                onclick="return confirm('Remove this booking? This action cannot be undone.');" title="Delete Booking">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
-
-            <div th:if="${#lists.isEmpty(bookings)}">
-                <p class="no-selection">No bookings recorded for this month.</p>
-            </div>
-
-            <div th:if="${!#lists.isEmpty(bookings)}">
-                <table class="bookings-table">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Date</th>
-                            <th>Day</th>
-                            <th>Floor</th>
-                            <th>Seat</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="booking : ${bookings}">
-                            <td th:text="${booking.username}"></td>
-                            <td th:text="${#temporals.format(booking.date, 'MMM dd, yyyy')}"></td>
-                            <td th:text="${booking.date.getDayOfWeek()}"></td>
-                            <td th:text="'Floor ' + ${booking.floor}"></td>
-                            <td th:text="${booking.seatId}"></td>
-                            <td>
-                                <form th:action="@{/admin/delete-booking}" method="post" style="display: inline;">
-                                    <input type="hidden" name="month" th:value="${month}">
-                                    <input type="hidden" name="date" th:value="${booking.date.toString()}">
-                                    <input type="hidden" name="seatId" th:value="${booking.seatId}">
-                                    <button type="submit" class="btn btn-danger btn-sm"
-                                            onclick="return confirm('Remove this booking for this employee?');">
-                                        Delete
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </main>
     </div>
 </body>
 </html>
-

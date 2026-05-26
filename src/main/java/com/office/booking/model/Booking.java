@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 public class Booking {
+    private String companyId;
     private String username;
     private LocalDate date;
     private int floor;
@@ -14,13 +15,22 @@ public class Booking {
     public Booking() {
     }
 
-    public Booking(String username, LocalDate date, int floor, String seatId) {
+    public Booking(String companyId, String username, LocalDate date, int floor, String seatId) {
+        this.companyId = companyId;
         this.username = username;
         this.date = date;
         this.floor = floor;
         this.seatId = seatId;
         this.month = date.getMonthValue();
         this.year = date.getYear();
+    }
+
+    public String getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(String companyId) {
+        this.companyId = companyId;
     }
 
     public String getUsername() {
@@ -79,6 +89,7 @@ public class Booking {
         if (o == null || getClass() != o.getClass()) return false;
         Booking booking = (Booking) o;
         return floor == booking.floor &&
+                Objects.equals(companyId, booking.companyId) &&
                 Objects.equals(username, booking.username) &&
                 Objects.equals(date, booking.date) &&
                 Objects.equals(seatId, booking.seatId);
@@ -86,6 +97,6 @@ public class Booking {
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, date, floor, seatId);
+        return Objects.hash(companyId, username, date, floor, seatId);
     }
 }

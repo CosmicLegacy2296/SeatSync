@@ -18,9 +18,34 @@ A Java-based web application for employees to book office seats. Built with Spri
 - Java 17 or higher
 - Maven 3.6 or higher
 
-## Setup Instructions
+## Setup Instructions & Scripts
 
-1. **Install Dependencies**:
+You can run this project using either npm scripts or standard Maven commands. Note that Node.js is only a convenience wrapper for executing these scripts; the core application is built with Java and Spring Boot.
+
+### Option 1: Using npm Scripts (Recommended)
+
+1. **Run the Application**:
+   ```bash
+   npm start
+   ```
+   *For development mode with Spring Boot DevTools hot swap/live reload:*
+   ```bash
+   npm run dev
+   ```
+
+2. **Build & Package**:
+   ```bash
+   npm run build
+   ```
+
+3. **Run Tests**:
+   ```bash
+   npm test
+   ```
+
+### Option 2: Using Maven / Run Scripts Directly
+
+1. **Install & Download Dependencies**:
    ```bash
    mvn clean install
    ```
@@ -30,8 +55,14 @@ A Java-based web application for employees to book office seats. Built with Spri
    mvn spring-boot:run
    ```
 
-3. **Access the Application**:
-   Open your browser and navigate to: `http://localhost:8080`
+3. **Using local helper shell script**:
+   ```bash
+   ./run.sh
+   ```
+
+### Accessing the Application
+
+Open your browser and navigate to: `http://localhost:8080`
 
 ## Default Test Accounts
 

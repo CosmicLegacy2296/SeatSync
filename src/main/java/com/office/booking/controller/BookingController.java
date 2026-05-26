@@ -5,7 +5,6 @@ import com.office.booking.model.BookingExtensionRequest;
 import com.office.booking.model.Floor;
 import com.office.booking.service.BookingService;
 import com.office.booking.service.ExtensionRequestService;
-import com.office.booking.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,9 +28,6 @@ public class BookingController {
     private BookingService bookingService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ExtensionRequestService extensionRequestService;
 
     @GetMapping("/dashboard")
@@ -40,8 +36,21 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
+
+        // Build per-month booking counts for status badges on month cards
+        // Months 2–12 are bookable (year is hardcoded to 2026)
+        java.util.Map<Integer, Integer> monthBookingCounts = new java.util.LinkedHashMap<>();
+        for (int m = 2; m <= 12; m++) {
+            monthBookingCounts.put(m, bookingService.getUserBookings(companyId, username, m).size());
+        }
 
         model.addAttribute("username", username);
+        model.addAttribute("monthBookingCounts", monthBookingCounts);
+        model.addAttribute("currentMonth", java.time.LocalDate.now().getMonthValue());
         return "dashboard";
     }
 
@@ -54,6 +63,10 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
 
         if (month < 2 || month > 12) {
             redirectAttributes.addFlashAttribute("error", "Invalid month selected");
@@ -61,8 +74,8 @@ public class BookingController {
         }
 
         List<LocalDate> availableDates = bookingService.getAvailableDates(month);
-        List<Booking> userBookings = bookingService.getUserBookings(username, month);
-        BookingService.BookingValidationResult validation = bookingService.validateUserBookings(username, month);
+        List<Booking> userBookings = bookingService.getUserBookings(companyId, username, month);
+        BookingService.BookingValidationResult validation = bookingService.validateUserBookings(companyId, username, month);
 
         model.addAttribute("month", month);
         model.addAttribute("monthName", getMonthName(month));
@@ -140,6 +153,10 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
         List<String> selectedDates = (List<String>) session.getAttribute(SESSION_SELECTED_DATES);
         if (selectedDates == null || selectedDates.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "No dates selected. Please start from the calendar.");
@@ -157,9 +174,9 @@ public class BookingController {
         }
         Boolean editMode = (Boolean) session.getAttribute(SESSION_EDIT_MODE);
         Booking currentBooking = Boolean.TRUE.equals(editMode)
-                ? bookingService.getBookingForUserAndDate(username, currentDate)
+                ? bookingService.getBookingForUserAndDate(companyId, username, currentDate)
                 : null;
-        Set<String> bookedSeats = bookingService.getBookedSeatsForDate(currentDate);
+        Set<String> bookedSeats = bookingService.getBookedSeatsForDate(companyId, currentDate);
         if (currentBooking != null && currentBooking.getSeatId() != null) {
             bookedSeats = new HashSet<>(bookedSeats);
             bookedSeats.remove(currentBooking.getSeatId());
@@ -272,6 +289,10 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
         List<String> selectedDates = (List<String>) session.getAttribute(SESSION_SELECTED_DATES);
         Map<String, String> assignments = (Map<String, String>) session.getAttribute(SESSION_SEAT_ASSIGNMENTS);
         Integer month = (Integer) session.getAttribute(SESSION_BOOKING_MONTH);
@@ -290,9 +311,9 @@ public class BookingController {
                 String seatId = parts[1];
                 BookingService.BookingResult result;
                 if (Boolean.TRUE.equals(editMode)) {
-                    result = bookingService.updateBooking(username, date, floor, seatId);
+                    result = bookingService.updateBooking(companyId, username, date, floor, seatId);
                 } else {
-                    result = bookingService.addBooking(username, date, floor, seatId);
+                    result = bookingService.addBooking(companyId, username, date, floor, seatId);
                 }
                 if (!result.isSuccess()) {
                     redirectAttributes.addFlashAttribute("error", result.getMessage());
@@ -323,16 +344,20 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
 
         LocalDate bookingDate = LocalDate.parse(date);
         BookingService.BookingResult result;
 
         if (Boolean.TRUE.equals(editMode)) {
             // Update existing booking
-            result = bookingService.updateBooking(username, bookingDate, floor, seatId);
+            result = bookingService.updateBooking(companyId, username, bookingDate, floor, seatId);
         } else {
             // Create new booking
-            result = bookingService.addBooking(username, bookingDate, floor, seatId);
+            result = bookingService.addBooking(companyId, username, bookingDate, floor, seatId);
         }
 
         if (result.isSuccess()) {
@@ -354,9 +379,13 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
 
         LocalDate bookingDate = LocalDate.parse(date);
-        BookingService.BookingResult result = bookingService.deleteBooking(username, bookingDate, seatId);
+        BookingService.BookingResult result = bookingService.deleteBooking(companyId, username, bookingDate, seatId);
 
         if (result.isSuccess()) {
             redirectAttributes.addFlashAttribute("success", result.getMessage());
@@ -407,8 +436,14 @@ public class BookingController {
     @GetMapping("/check-seat-availability")
     @ResponseBody
     public Set<LocalDate> checkSeatAvailability(@RequestParam String seatId,
-                                               @RequestParam int month) {
-        return bookingService.getBookedDatesForSeat(seatId, month);
+                                               @RequestParam int month,
+                                               HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        String companyId = (String) session.getAttribute("companyId");
+        if (username == null || companyId == null) {
+            return java.util.Set.of();
+        }
+        return bookingService.getBookedDatesForSeat(companyId, seatId, month);
     }
 
     private String getMonthName(int month) {

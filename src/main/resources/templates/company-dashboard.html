@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Dashboard - SeatSync</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a th:href="@{/company-dashboard}" class="sidebar-logo">
+                <div class="logo-icon" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-warn));">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Workspace</span>
+            </a>
+            
+            <nav class="sidebar-nav">
+                <a th:href="@{/company-dashboard}" class="nav-link active">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a th:href="@{/admin/bookings}" class="nav-link" style="color: var(--accent-warn);">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Go to Admin Panel &rarr;</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar" style="color: var(--accent-warn);">O</div>
+                    <div class="user-details">
+                        <span class="user-name" th:text="${company.ownerName}">Owner Name</span>
+                        <span class="user-role">Workspace Owner</span>
+                    </div>
+                </div>
+                <a th:href="@{/logout}" class="btn btn-secondary btn-sm btn-block" style="margin-top: 12px; justify-content: center;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                
+                <div th:if="${welcomeMessage}" class="alert alert-success" style="margin-bottom: 24px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span th:text="${welcomeMessage}"></span>
+                </div>
+                
+                <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span th:text="${success}"></span>
+                </div>
+
+                <div th:if="${error}" class="alert alert-error" style="margin-bottom: 24px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <!-- Company Header Profile -->
+                <div class="card" style="margin-bottom: 32px; display: flex; align-items: center; gap: 32px; background: linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.05)); border-color: rgba(99, 102, 241, 0.2);">
+                    <div style="width: 100px; height: 100px; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-base); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <img th:if="${company.logoBase64 != null}" th:src="${company.logoBase64}" style="width: 100%; height: 100%; object-fit: contain; padding: 12px;" alt="Company Logo">
+                        <span th:unless="${company.logoBase64 != null}" style="font-size: 32px; font-weight: 800; color: var(--accent-primary);" th:text="${#strings.substring(company.companyName, 0, 1)}">C</span>
+                    </div>
+                    <div>
+                        <h1 style="font-size: 36px; font-weight: 800; margin-bottom: 8px; line-height: 1.1;" th:text="${company.displayName}">Company Name</h1>
+                        <p style="color: var(--text-secondary); display: flex; align-items: center; gap: 16px; font-size: 15px;">
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                </svg>
+                                <span th:text="${company.industry}">Industry</span>
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span th:text="${company.companySize} + ' Employees'">Size</span>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Stat Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 32px;">
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Registered Staff</h3>
+                        <div style="font-size: 36px; font-weight: 800; font-family: var(--font-heading); color: var(--accent-primary);" th:text="${totalEmployees}">0</div>
+                    </div>
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Desks</h3>
+                        <div style="font-size: 36px; font-weight: 800; font-family: var(--font-heading);" th:text="${totalSeats}">0</div>
+                    </div>
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Active Bookings</h3>
+                        <div style="font-size: 36px; font-weight: 800; font-family: var(--font-heading); color: var(--accent-warn);" th:text="${activeBookingsThisMonth}">0</div>
+                    </div>
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Workspace Floors</h3>
+                        <div style="font-size: 36px; font-weight: 800; font-family: var(--font-heading);">2</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px;">
+                    <!-- Employees Section -->
+                    <div class="table-container" style="align-self: start;">
+                        <div style="padding: 24px 24px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="font-size: 18px; margin: 0;">Employee Directory</h3>
+                            </div>
+                        </div>
+                        
+                        <!-- Add Employee Form -->
+                        <div style="padding: 16px 24px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-color);">
+                            <form th:action="@{/company/add-employee}" method="post" style="display: flex; gap: 12px; align-items: flex-end;">
+                                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                    <input type="text" class="form-control" name="empName" placeholder="Full Name" required style="font-size: 14px; padding: 10px 14px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                    <input type="text" class="form-control" name="empUsername" placeholder="Username" required style="font-size: 14px; padding: 10px 14px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                    <input type="password" class="form-control" name="empPassword" placeholder="Temp Password" required style="font-size: 14px; padding: 10px 14px;">
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="padding: 10px 16px; font-size: 14px; margin-bottom: 0;">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    Add
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <table class="styled-table" style="font-size: 14px;">
+                                <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="emp : ${employees}">
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-base); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: var(--text-secondary);" th:text="${#strings.substring(emp.name, 0, 1).toUpperCase()}">N</div>
+                                                <strong th:text="${emp.name}">Name</strong>
+                                            </div>
+                                        </td>
+                                        <td><code style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; color: var(--text-secondary);" th:text="${emp.username}"></code></td>
+                                        <td>
+                                            <span th:if="${emp.username == company.ownerEmail}" class="month-stats-badge valid" style="margin: 0; padding: 4px 8px; font-size: 11px;">Owner</span>
+                                            <span th:unless="${emp.username == company.ownerEmail}" class="month-stats-badge" style="margin: 0; padding: 4px 8px; font-size: 11px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-secondary);">Employee</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div class="card" style="align-self: start;">
+                        <h3 style="font-size: 18px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">Workspace Configuration</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div style="background: rgba(57, 255, 20, 0.05); border: 1px solid rgba(57, 255, 20, 0.2); padding: 16px; border-radius: var(--radius-md);">
+                                <div style="font-size: 13px; color: var(--accent-primary); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Invite Employees Code</div>
+                                <div style="font-size: 28px; color: var(--text-primary); font-weight: 800; font-family: var(--font-mono); letter-spacing: 2px;" th:text="${company.companyCode}">CODE</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Share this code with employees to join your workspace.</div>
+                            </div>
+                            
+                            <div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Operating Hours</div>
+                                <div style="font-size: 16px; color: var(--text-primary); font-weight: 500;" th:text="${company.startTime} + ' - ' + ${company.endTime}">09:00 - 17:00</div>
+                            </div>
+                            
+                            <div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Timezone</div>
+                                <div style="font-size: 16px; color: var(--text-primary); font-weight: 500;" th:text="${company.timezone}">UTC</div>
+                            </div>
+                            
+                            <div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Owner Contact</div>
+                                <div style="font-size: 16px; color: var(--text-primary); font-weight: 500;" th:text="${company.ownerName} + ' (' + ${company.ownerTitle} + ')'">Jane Doe</div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-top: 2px;" th:text="${company.ownerEmail}">jane@example.com</div>
+                            </div>
+                            
+                            <div style="margin-top: 16px;">
+                                <a th:href="@{/admin/bookings}" class="btn btn-warning btn-block">
+                                    Open Admin Console
+                                </a>
+                                <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 12px;">Admin console provides access to view detailed bookings and manage extension requests.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -22,8 +22,17 @@ public class BookingService {
     public void setExtensionRequestService(com.office.booking.service.ExtensionRequestService extensionRequestService) {
         this.extensionRequestService = extensionRequestService;
     }
-    private final Map<String, Booking> seatBookings = new ConcurrentHashMap<>(); // Key: date-seatId
+    // Keyed by "<companyId>:<date>-<seatId>"
+    private final Map<String, Booking> seatBookings = new ConcurrentHashMap<>();
     private final List<Floor> floors;
+
+    private String userKey(String companyId, String username) {
+        return companyId + ":" + username;
+    }
+
+    private String seatKey(String companyId, LocalDate date, String seatId) {
+        return companyId + ":" + date.toString() + "-" + seatId;
+    }
 
     public BookingService() {
         // Initialize floors: Ground (0) has no seats, First (1) and Second (2) have seats
@@ -37,26 +46,26 @@ public class BookingService {
         return floors;
     }
 
-    public List<Booking> getUserBookings(String username, int month) {
-        return userBookings.getOrDefault(username, new ArrayList<>())
+    public List<Booking> getUserBookings(String companyId, String username, int month) {
+        return userBookings.getOrDefault(userKey(companyId, username), new ArrayList<>())
                 .stream()
                 .filter(b -> b.getMonth() == month && b.getYear() == YEAR)
                 .collect(Collectors.toList());
     }
 
-    public List<Booking> getAllUserBookings(String username) {
-        return userBookings.getOrDefault(username, new ArrayList<>());
+    public List<Booking> getAllUserBookings(String companyId, String username) {
+        return userBookings.getOrDefault(userKey(companyId, username), new ArrayList<>());
     }
 
-    public BookingResult addBooking(String username, LocalDate date, int floor, String seatId) {
+    public BookingResult addBooking(String companyId, String username, LocalDate date, int floor, String seatId) {
         // Check if seat is already booked for this date
-        String seatKey = date.toString() + "-" + seatId;
+        String seatKey = seatKey(companyId, date, seatId);
         if (seatBookings.containsKey(seatKey)) {
             return new BookingResult(false, "This seat is already booked for the selected date.");
         }
 
         // Check if user already has a booking for this date
-        List<Booking> userBookingsForMonth = getUserBookings(username, date.getMonthValue());
+        List<Booking> userBookingsForMonth = getUserBookings(companyId, username, date.getMonthValue());
         boolean hasBookingForDate = userBookingsForMonth.stream()
                 .anyMatch(b -> b.getDate().equals(date));
 
@@ -88,30 +97,30 @@ public class BookingService {
         }
 
         // Create and save booking
-        Booking booking = new Booking(username, date, floor, seatId);
-        userBookings.computeIfAbsent(username, k -> new ArrayList<>()).add(booking);
+        Booking booking = new Booking(companyId, username, date, floor, seatId);
+        userBookings.computeIfAbsent(userKey(companyId, username), k -> new ArrayList<>()).add(booking);
         seatBookings.put(seatKey, booking);
 
         return new BookingResult(true, "Booking successful!");
     }
 
-    public BookingResult deleteBooking(String username, LocalDate date, String seatId) {
-        String seatKey = date.toString() + "-" + seatId;
+    public BookingResult deleteBooking(String companyId, String username, LocalDate date, String seatId) {
+        String seatKey = seatKey(companyId, date, seatId);
         Booking booking = seatBookings.get(seatKey);
 
         if (booking == null || !booking.getUsername().equals(username)) {
             return new BookingResult(false, "Booking not found or you don't have permission to delete it.");
         }
 
-        userBookings.get(username).remove(booking);
+        userBookings.get(userKey(companyId, username)).remove(booking);
         seatBookings.remove(seatKey);
 
         return new BookingResult(true, "Booking deleted successfully!");
     }
 
-    public BookingResult updateBooking(String username, LocalDate date, int floor, String newSeatId) {
+    public BookingResult updateBooking(String companyId, String username, LocalDate date, int floor, String newSeatId) {
         // Find existing booking for this user and date
-        List<Booking> userBookingsForMonth = getUserBookings(username, date.getMonthValue());
+        List<Booking> userBookingsForMonth = getUserBookings(companyId, username, date.getMonthValue());
         Booking existingBooking = userBookingsForMonth.stream()
                 .filter(b -> b.getDate().equals(date))
                 .findFirst()
@@ -121,8 +130,8 @@ public class BookingService {
             return new BookingResult(false, "No existing booking found for this date.");
         }
 
-        String oldSeatKey = date.toString() + "-" + existingBooking.getSeatId();
-        String newSeatKey = date.toString() + "-" + newSeatId;
+        String oldSeatKey = seatKey(companyId, date, existingBooking.getSeatId());
+        String newSeatKey = seatKey(companyId, date, newSeatId);
 
         // Check if new seat is already booked by someone else
         if (seatBookings.containsKey(newSeatKey) && !seatBookings.get(newSeatKey).getUsername().equals(username)) {
@@ -157,16 +166,16 @@ public class BookingService {
         return new BookingResult(true, "Booking updated successfully!");
     }
 
-    public Booking getBookingForUserAndDate(String username, LocalDate date) {
-        List<Booking> userBookingsForMonth = getUserBookings(username, date.getMonthValue());
+    public Booking getBookingForUserAndDate(String companyId, String username, LocalDate date) {
+        List<Booking> userBookingsForMonth = getUserBookings(companyId, username, date.getMonthValue());
         return userBookingsForMonth.stream()
                 .filter(b -> b.getDate().equals(date))
                 .findFirst()
                 .orElse(null);
     }
 
-    public BookingValidationResult validateUserBookings(String username, int month) {
-        List<Booking> bookings = getUserBookings(username, month);
+    public BookingValidationResult validateUserBookings(String companyId, String username, int month) {
+        List<Booking> bookings = getUserBookings(companyId, username, month);
         int bookingCount = bookings.size();
 
         if (bookingCount < MIN_REQUIRED_DAYS) {
@@ -179,9 +188,10 @@ public class BookingService {
         return new BookingValidationResult(true, "You meet the requirements for " + getMonthName(month) + ".");
     }
 
-    public Set<LocalDate> getBookedDatesForSeat(String seatId, int month) {
+    public Set<LocalDate> getBookedDatesForSeat(String companyId, String seatId, int month) {
         return seatBookings.values().stream()
-                .filter(b -> b.getSeatId().equals(seatId) &&
+                .filter(b -> companyId.equals(b.getCompanyId()) &&
+                             b.getSeatId().equals(seatId) &&
                              b.getMonth() == month &&
                              b.getYear() == YEAR)
                 .map(Booking::getDate)
@@ -191,9 +201,9 @@ public class BookingService {
     /**
      * Returns all seat IDs booked for a specific date.
      */
-    public Set<String> getBookedSeatsForDate(LocalDate date) {
+    public Set<String> getBookedSeatsForDate(String companyId, LocalDate date) {
         return seatBookings.values().stream()
-                .filter(b -> b.getDate().equals(date))
+                .filter(b -> companyId.equals(b.getCompanyId()) && b.getDate().equals(date))
                 .map(Booking::getSeatId)
                 .collect(Collectors.toSet());
     }
@@ -237,19 +247,27 @@ public class BookingService {
      * Admin-only deletion of a booking, regardless of owning user.
      */
     public BookingResult adminDeleteBooking(LocalDate date, String seatId) {
-        String seatKey = date.toString() + "-" + seatId;
-        Booking booking = seatBookings.get(seatKey);
+        List<String> keysToRemove = seatBookings.entrySet().stream()
+                .filter(e -> e.getValue().getDate().equals(date) && e.getValue().getSeatId().equals(seatId))
+                .map(Map.Entry::getKey)
+                .toList();
 
-        if (booking == null) {
+        if (keysToRemove.isEmpty()) {
             return new BookingResult(false, "Booking not found.");
         }
 
-        List<Booking> bookingsForUser = userBookings.get(booking.getUsername());
-        if (bookingsForUser != null) {
-            bookingsForUser.remove(booking);
+        for (String key : keysToRemove) {
+            Booking booking = seatBookings.get(key);
+            if (booking != null) {
+                String userKey = userKey(booking.getCompanyId(), booking.getUsername());
+                List<Booking> bookingsForUser = userBookings.get(userKey);
+                if (bookingsForUser != null) {
+                    bookingsForUser.remove(booking);
+                }
+            }
+            seatBookings.remove(key);
         }
 
-        seatBookings.remove(seatKey);
         return new BookingResult(true, "Booking deleted successfully.");
     }
 

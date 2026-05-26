@@ -1,61 +1,84 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Seat Sync</title>
+    <title>SeatSync — Employee Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Seat Sync</h1>
-            <div class="user-info">
-                <span>Welcome, <strong th:text="${username}"></strong></span>
-                <a th:href="@{/logout}" class="btn btn-secondary">Logout</a>
-            </div>
-        </div>
-        
-        <div class="content">
-            <h2>Select a Month (2026)</h2>
-            <p class="info-text">Please select a month to book your office seats. You need to book at least 6 days per month (maximum 10 days).</p>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a th:href="@{/dashboard}" class="sidebar-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">SeatSync</span>
+            </a>
             
-            <div class="month-grid">
-                <a th:href="@{/calendar/2}" class="month-card">
-                    <div class="month-name">February</div>
+            <nav class="sidebar-nav">
+                <a th:href="@{/dashboard}" class="nav-link active">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>Dashboard</span>
                 </a>
-                <a th:href="@{/calendar/3}" class="month-card">
-                    <div class="month-name">March</div>
-                </a>
-                <a th:href="@{/calendar/4}" class="month-card">
-                    <div class="month-name">April</div>
-                </a>
-                <a th:href="@{/calendar/5}" class="month-card">
-                    <div class="month-name">May</div>
-                </a>
-                <a th:href="@{/calendar/6}" class="month-card">
-                    <div class="month-name">June</div>
-                </a>
-                <a th:href="@{/calendar/7}" class="month-card">
-                    <div class="month-name">July</div>
-                </a>
-                <a th:href="@{/calendar/8}" class="month-card">
-                    <div class="month-name">August</div>
-                </a>
-                <a th:href="@{/calendar/9}" class="month-card">
-                    <div class="month-name">September</div>
-                </a>
-                <a th:href="@{/calendar/10}" class="month-card">
-                    <div class="month-name">October</div>
-                </a>
-                <a th:href="@{/calendar/11}" class="month-card">
-                    <div class="month-name">November</div>
-                </a>
-                <a th:href="@{/calendar/12}" class="month-card">
-                    <div class="month-name">December</div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar" th:text="${#strings.substring(username, 0, 1).toUpperCase()}">U</div>
+                    <div class="user-details">
+                        <span class="user-name" th:text="${username}">username</span>
+                        <span class="user-role">Employee</span>
+                    </div>
+                </div>
+                <a th:href="@{/logout}" class="btn btn-secondary btn-sm btn-block" style="margin-top: 12px; justify-content: center;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Log Out</span>
                 </a>
             </div>
-        </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container" th:with="monthNames=${ {'', '', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'} }">
+                <div style="margin-bottom: 32px;">
+                    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Welcome back, <span class="text-gradient" th:text="${username}">Employee</span>!</h1>
+                    <p style="color: var(--text-secondary); max-width: 700px;">
+                        Select a month below to book or modify your seat reservations. Remember: company policy requires booking a minimum of 6 days and a maximum of 10 days per month.
+                    </p>
+                </div>
+
+                <div class="month-grid">
+                    <a th:each="entry : ${monthBookingCounts}" 
+                       th:href="@{'/calendar/' + ${entry.key}}" 
+                       class="month-card"
+                       th:classappend="(${entry.key} == ${currentMonth} ? ' active-month' : '') + (${entry.key} &lt; ${currentMonth} ? ' past-month' : '')">
+                        <div>
+                            <div class="month-name" th:text="${monthNames[entry.key]}">Month</div>
+                            <div style="font-size: 13px; color: var(--text-muted);" th:text="${entry.key} == ${currentMonth} ? 'Current Month' : (${entry.key} &lt; ${currentMonth} ? 'Past Month' : 'Upcoming Month')">Status</div>
+                        </div>
+                        
+                        <div class="month-stats-badge" 
+                             th:classappend="${entry.value >= 6 && entry.value <= 10} ? 'valid' : 'invalid'"
+                             th:text="${entry.value} + ' / 10 days booked'">
+                            0 / 10 days booked
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </main>
     </div>
 </body>
 </html>

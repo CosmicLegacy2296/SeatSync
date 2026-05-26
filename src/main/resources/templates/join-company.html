@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Workspace - SeatSync</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="card login-box">
+            <div class="login-header">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <h1 class="logo-text">Join Workspace</h1>
+                <p>Enter the code provided by your workspace admin</p>
+            </div>
+
+            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 24px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span th:text="${error}">Error Message</span>
+            </div>
+
+            <form th:action="@{/join-company}" method="post">
+                <div class="form-group">
+                    <label class="form-label" for="companyCode">Workspace Code</label>
+                    <input class="form-control" type="text" id="companyCode" name="companyCode" required placeholder="e.g. AB12CD" style="text-transform: uppercase; font-size: 20px; letter-spacing: 2px; text-align: center;">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    Join Workspace
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Don't Have an Account? <a th:href="@{/employee-signup}" class="form-link">Employee Sign Up</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

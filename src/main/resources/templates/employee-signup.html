@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Sign Up - SeatSync</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="login-wrapper" style="padding-top: 40px; padding-bottom: 40px;">
+    <div class="card login-box" style="max-width: 600px; padding: 40px;">
+        <div class="login-header" style="margin-bottom: 24px;">
+            <div class="logo-icon" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="logo-text">Employee Sign Up</h1>
+                <p>Create your account, then join using an invite code</p>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span th:text="${error}">Error</span>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" style="margin-bottom: 20px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span th:text="${success}">Success</span>
+        </div>
+
+        <form th:action="@{/employee-signup}" method="post">
+            <div class="form-group">
+                <label class="form-label" for="fullName">Full Name *</label>
+                <input class="form-control" id="fullName" name="fullName" type="text" required placeholder="Jane Doe">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="username">Username or Email *</label>
+                <input class="form-control" id="username" name="username" type="text" required placeholder="jane@company.com">
+            </div>
+
+            <div class="form-group" style="position: relative;">
+                <label class="form-label" for="password">Password *</label>
+                <input class="form-control" id="password" name="password" type="password" required placeholder="At least 8 characters">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">Confirm Password *</label>
+                <input class="form-control" id="confirmPassword" name="confirmPassword" type="password" required placeholder="Re-enter password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 18px;">
+                Continue to Invite Code
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 22px;">
+            <a th:href="@{/login}" class="form-link">&larr; Back to Login</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

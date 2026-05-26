@@ -19,13 +19,32 @@
 
 ## Running the Application
 
-### Option 1: Using the Run Script (Recommended)
+### Option 1: Using npm Scripts (Recommended)
+
+If you have Node.js installed, you can use the npm scripts defined in `package.json`. Node.js is only used as a task runner wrapper here.
+
+1. **Run the application**:
+   ```bash
+   npm start
+   ```
+
+2. **Run in development mode (with automatic hot swap / DevTools restart)**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Build the production package (JAR)**:
+   ```bash
+   npm run build
+   ```
+
+### Option 2: Using the Run Script
 
 ```bash
 ./run.sh
 ```
 
-### Option 2: Using Maven Directly
+### Option 3: Using Maven Directly
 
 1. **First time setup** - Download dependencies:
    ```bash
@@ -37,7 +56,7 @@
    mvn spring-boot:run
    ```
 
-### Option 3: Build JAR and Run
+### Option 4: Build JAR and Run
 
 1. **Build the JAR file**:
    ```bash

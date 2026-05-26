@@ -1,48 +1,127 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seat Sync - Admin Login</title>
+    <title>SeatSync — Admin Portal Login</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
-        <div class="login-box">
-            <h1>Seat Sync</h1>
-            <h2>Administrator Access</h2>
+    <div class="login-wrapper">
+        <div class="card login-box" th:classappend="${error != null} ? 'input-error' : ''">
+            <div class="login-header">
+                <div class="logo-icon" style="background: linear-gradient(135deg, var(--accent-secondary), var(--accent-warn));">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6-2zm0 8h2v2h-2z"/>
+                        <!-- Admin gear/key icon representation -->
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                </div>
+                <h1 class="logo-text">SeatSync</h1>
+                <p>Admin Console Access</p>
+            </div>
 
-            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span th:text="${error}">Invalid credentials</span>
+            </div>
 
             <form th:action="@{/admin-login}" method="post">
                 <div class="form-group">
-                    <label for="username">Admin username</label>
-                    <input type="text" id="username" name="username" required autocomplete="off">
+                    <label class="form-label" for="username">Username</label>
+                    <input class="form-control" type="text" id="username" name="username" placeholder="e.g. admin" required autocomplete="username">
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="off">
+                <div class="form-group" style="position: relative;">
+                    <label class="form-label" for="password">Password</label>
+                    <input class="form-control" type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 48px;">
+                    <button type="button" id="togglePassword" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <svg id="eyeOpenIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg id="eyeClosedIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
                 </div>
 
-                <div class="form-group">
-                    <label for="securityCode">Security code</label>
-                    <input type="password" id="securityCode" name="securityCode" required autocomplete="off">
+                <div class="form-group" style="position: relative;">
+                    <label class="form-label" for="securityCode">Security Code</label>
+                    <input class="form-control" type="password" id="securityCode" name="securityCode" placeholder="SEC•••" required autocomplete="off" style="padding-right: 48px;">
+                    <button type="button" id="toggleSecurityCode" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <svg id="secEyeOpenIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg id="secEyeClosedIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Sign in as Admin</button>
+                <div class="form-footer" style="justify-content: flex-end;">
+                    <a th:href="@{/register}" class="form-link">Register company</a>
+                </div>
+
+                <button type="submit" class="btn btn-warning btn-block">Access Admin Console</button>
             </form>
 
-            <div class="info-box">
-                <p><strong>Test Admin Credentials</strong></p>
-                <ul>
-                    <li>Username: <code>admin</code></li>
-                    <li>Password: <code>admin</code></li>
-                    <li>Security code: <code>SEC123</code></li>
-                </ul>
+            <div class="info-box" style="margin-top: 24px; font-size: 13px;">
+                <div style="font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Default Admin Credentials:</div>
+                <div style="display: flex; flex-direction: column; gap: 4px; color: var(--text-secondary);">
+                    <div>Username: <code>admin</code></div>
+                    <div>Password: <code>admin</code></div>
+                    <div>Security Code: <code>SEC123</code></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 24px;">
+                <a th:href="@{/}" class="form-link" style="font-size: 14px;">&larr; Back to Landing Page</a>
             </div>
         </div>
     </div>
+
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+        const eyeOpenIcon = document.querySelector('#eyeOpenIcon');
+        const eyeClosedIcon = document.querySelector('#eyeClosedIcon');
+
+        togglePassword.addEventListener('click', function () {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            if (type === 'password') {
+                eyeOpenIcon.style.display = 'block';
+                eyeClosedIcon.style.display = 'none';
+            } else {
+                eyeOpenIcon.style.display = 'none';
+                eyeClosedIcon.style.display = 'block';
+            }
+        });
+
+        const toggleSecurityCode = document.querySelector('#toggleSecurityCode');
+        const securityCode = document.querySelector('#securityCode');
+        const secEyeOpenIcon = document.querySelector('#secEyeOpenIcon');
+        const secEyeClosedIcon = document.querySelector('#secEyeClosedIcon');
+
+        toggleSecurityCode.addEventListener('click', function () {
+            const type = securityCode.getAttribute('type') === 'password' ? 'text' : 'password';
+            securityCode.setAttribute('type', type);
+            if (type === 'password') {
+                secEyeOpenIcon.style.display = 'block';
+                secEyeClosedIcon.style.display = 'none';
+            } else {
+                secEyeOpenIcon.style.display = 'none';
+                secEyeClosedIcon.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
-

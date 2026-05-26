@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Company - SeatSync</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="login-wrapper" style="padding-top: 40px; padding-bottom: 40px;">
+        <div class="card login-box" style="max-width: 600px; padding: 40px;">
+            <div class="login-header" style="margin-bottom: 24px;">
+                <div class="logo-icon" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <h1 class="logo-text">Register Workspace</h1>
+                <p>Set up SeatSync for your organization</p>
+            </div>
+
+            <!-- Wizard Progress -->
+            <div class="wizard-progress" style="margin-bottom: 32px;">
+                <div class="wizard-progress-bar" id="progressBar"></div>
+                <div class="wizard-step active" id="step1-icon">1</div>
+                <div class="wizard-step" id="step2-icon">2</div>
+                <div class="wizard-step" id="step3-icon">3</div>
+            </div>
+
+            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span th:text="${error}">Registration Error</span>
+            </div>
+
+            <form th:action="@{/register}" method="post" id="registrationForm">
+                
+                <!-- Step 1: Company Profile -->
+                <div class="wizard-section active" id="step1">
+                    <h3 style="margin-bottom: 24px; font-size: 20px;">1. Company Profile</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="name">Company Name *</label>
+                        <input class="form-control" type="text" id="name" name="companyName" required placeholder="Acme Corp">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="tradingName">Trading Name (Optional)</label>
+                        <input class="form-control" type="text" id="tradingName" name="tradingName" placeholder="Acme">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label" for="industry">Industry *</label>
+                            <select class="form-control" id="industry" name="industry" required>
+                                <option value="">Select industry</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Consulting">Consulting</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="companySize">Company Size *</label>
+                            <select class="form-control" id="companySize" name="companySize" required>
+                                <option value="">Select size</option>
+                                <option value="1-50">1-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="201-500">201-500 employees</option>
+                                <option value="500+">500+ employees</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="website">Website (Optional)</label>
+                        <input class="form-control" type="url" id="website" name="website" placeholder="https://acme.com">
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary btn-block" onclick="nextStep(1)">Continue to Workspace Settings</button>
+                </div>
+
+                <!-- Step 2: Settings & Logo -->
+                <div class="wizard-section" id="step2">
+                    <h3 style="margin-bottom: 24px; font-size: 20px;">2. Workspace Settings</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Company Logo</label>
+                        <div class="logo-upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                            <svg width="32" height="32" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-bottom: 12px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p style="color: var(--text-secondary); font-size: 14px;">Drag & drop your logo here, or <span style="color: var(--accent-primary);">click to browse</span></p>
+                            <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">PNG, JPG up to 1MB</p>
+                            <img id="logoPreview" class="logo-preview-img" style="display: none;" alt="Logo Preview">
+                        </div>
+                        <input type="file" id="fileInput" accept="image/png, image/jpeg" style="display: none;" onchange="handleFileSelect(event)">
+                        <input type="hidden" id="logoBase64" name="logoBase64">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label" for="timezone">Timezone *</label>
+                            <select class="form-control" id="timezone" name="timezone" required>
+                                <option value="UTC">UTC (GMT+0)</option>
+                                <option value="EST">EST (GMT-5)</option>
+                                <option value="CST">CST (GMT-6)</option>
+                                <option value="PST">PST (GMT-8)</option>
+                                <option value="CET">CET (GMT+1)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="workingHours">Working Hours *</label>
+                            <select class="form-control" id="workingHours" name="workingHours" required>
+                                <option value="09:00-17:00">09:00 - 17:00</option>
+                                <option value="08:00-16:00">08:00 - 16:00</option>
+                                <option value="10:00-18:00">10:00 - 18:00</option>
+                                <option value="Flexible">Flexible</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="floorSeatConfig">Floor &amp; Seat Configuration (JSON)</label>
+                        <textarea class="form-control" id="floorSeatConfig" name="floorSeatConfig" rows="3" style="font-family: var(--font-mono); font-size: 13px;" placeholder='{"1":20, "2":20}'>{"1":20, "2":20}</textarea>
+                        <p style="color: var(--text-muted); font-size: 12px; margin-top: 6px;">Define the number of seats per floor. (e.g. Floor 1 has 20 seats)</p>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)" style="flex: 1;">Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(2)" style="flex: 2;">Continue to Admin Account</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Admin Account -->
+                <div class="wizard-section" id="step3">
+                    <h3 style="margin-bottom: 24px; font-size: 20px;">3. Administrator Account</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="ownerName">Your Name *</label>
+                        <input class="form-control" type="text" id="ownerName" name="ownerName" required placeholder="Jane Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="ownerTitle">Your Title *</label>
+                        <input class="form-control" type="text" id="ownerTitle" name="ownerTitle" required placeholder="CEO, CTO, Office Manager...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="ownerEmail">Admin Email *</label>
+                        <input class="form-control" type="email" id="ownerEmail" name="ownerEmail" required placeholder="jane@acme.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ownerPassword">Admin Password *</label>
+                        <input class="form-control" type="password" id="ownerPassword" name="ownerPassword" required placeholder="••••••••" onkeyup="checkPasswordStrength()">
+                        <div class="password-strength-bar">
+                            <div class="password-strength-fill" id="strengthFill"></div>
+                        </div>
+                        <p id="strengthText" style="color: var(--text-muted); font-size: 12px; margin-top: 6px;">Enter at least 8 characters</p>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)" style="flex: 1;">Back</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 2;">Complete Registration</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div style="text-align: center; margin-top: 32px;">
+                <p style="color: var(--text-secondary); font-size: 14px;">Already have a workspace? <a th:href="@{/login}" class="form-link">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wizard Navigation
+        function validateStep(step) {
+            const currentSection = document.getElementById('step' + step);
+            const inputs = currentSection.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('input-error');
+                    setTimeout(() => input.classList.remove('input-error'), 400);
+                }
+            });
+            return isValid;
+        }
+
+        function nextStep(current) {
+            if (!validateStep(current)) return;
+            
+            document.getElementById('step' + current).classList.remove('active');
+            document.getElementById('step' + (current + 1)).classList.add('active');
+            
+            document.getElementById('step' + (current + 1) + '-icon').classList.add('active');
+            document.getElementById('step' + current + '-icon').classList.add('completed');
+            document.getElementById('step' + current + '-icon').classList.remove('active');
+            
+            updateProgressBar(current + 1);
+        }
+
+        function prevStep(current) {
+            document.getElementById('step' + current).classList.remove('active');
+            document.getElementById('step' + (current - 1)).classList.add('active');
+            
+            document.getElementById('step' + current + '-icon').classList.remove('active');
+            document.getElementById('step' + (current - 1) + '-icon').classList.remove('completed');
+            document.getElementById('step' + (current - 1) + '-icon').classList.add('active');
+            
+            updateProgressBar(current - 1);
+        }
+
+        function updateProgressBar(step) {
+            const bar = document.getElementById('progressBar');
+            if (step === 1) bar.style.width = '0%';
+            if (step === 2) bar.style.width = '50%';
+            if (step === 3) bar.style.width = '100%';
+        }
+
+        // File Drag and Drop & Base64 Conversion
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const logoPreview = document.getElementById('logoPreview');
+        const logoBase64 = document.getElementById('logoBase64');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            const file = files[0];
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file (PNG, JPG)');
+                return;
+            }
+            
+            if (file.size > 1024 * 1024) {
+                alert('File is too large. Please upload an image under 1MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = function() {
+                const base64data = reader.result;
+                logoBase64.value = base64data;
+                logoPreview.src = base64data;
+                logoPreview.style.display = 'inline-block';
+            }
+        }
+
+        // Password Strength Meter
+        function checkPasswordStrength() {
+            const pwd = document.getElementById('ownerPassword').value;
+            const fill = document.getElementById('strengthFill');
+            const text = document.getElementById('strengthText');
+            
+            fill.className = 'password-strength-fill'; // reset
+            
+            if (pwd.length === 0) {
+                fill.style.width = '0%';
+                text.textContent = 'Enter at least 8 characters';
+            } else if (pwd.length < 8) {
+                fill.classList.add('weak');
+                text.textContent = 'Weak: Too short';
+            } else {
+                let strength = 0;
+                if (pwd.match(/[a-z]/)) strength++;
+                if (pwd.match(/[A-Z]/)) strength++;
+                if (pwd.match(/[0-9]/)) strength++;
+                if (pwd.match(/[^a-zA-Z0-9]/)) strength++;
+                
+                if (strength < 3) {
+                    fill.classList.add('medium');
+                    text.textContent = 'Medium: Add numbers or symbols';
+                } else {
+                    fill.classList.add('strong');
+                    text.textContent = 'Strong: Excellent password';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

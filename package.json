@@ -1,0 +1,18 @@
+{
+  "name": "seatsync",
+  "version": "1.0.0",
+  "description": "SeatSync — office seat booking system for modern teams",
+  "scripts": {
+    "start": "./maven_local/apache-maven-3.9.9/bin/mvn spring-boot:run -DskipTests",
+    "start:test": "./maven_local/apache-maven-3.9.9/bin/mvn spring-boot:run",
+    "build": "./maven_local/apache-maven-3.9.9/bin/mvn clean package",
+    "test": "./maven_local/apache-maven-3.9.9/bin/mvn test",
+    "dev": "./maven_local/apache-maven-3.9.9/bin/mvn spring-boot:run -Dspring-boot.run.jvmArguments='-Dspring.devtools.restart.enabled=true'"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": ["seat-booking", "office", "spring-boot", "workspace"],
+  "author": "SeatSync",
+  "license": "MIT"
+}
