@@ -3,10 +3,13 @@
 echo "Building and running Seat Sync..."
 echo ""
 
-# Check if Maven is installed
-if ! command -v mvn &> /dev/null
-then
-    echo "Error: Maven is not installed. Please install Maven first."
+# Determine Maven command
+if [ -f "./maven_local/apache-maven-3.9.9/bin/mvn" ]; then
+    MVN_CMD="./maven_local/apache-maven-3.9.9/bin/mvn"
+elif command -v mvn &> /dev/null; then
+    MVN_CMD="mvn"
+else
+    echo "Error: Maven is not installed. Please install Maven first, or download it to ./maven_local."
     exit 1
 fi
 
@@ -18,4 +21,5 @@ then
 fi
 
 # Build and run
-mvn clean spring-boot:run
+$MVN_CMD clean spring-boot:run
+

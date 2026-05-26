@@ -35,3 +35,6 @@ Thumbs.db
 
 # Spring Boot
 application-local.properties
+
+# Local maven binaries
+maven_local/
