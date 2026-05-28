@@ -10,38 +10,69 @@ import java.util.Objects;
 @Table(name = "users")
 public class User {
     @Id
-    private String username;
+    private String email;
     private String password;
     private String name;
+    private String displayName;
     @Transient
     private boolean loggedIn;
     private int maxAllowedDays = 10;
     /** ID of the company this user belongs to; null for legacy/dev accounts */
     private String companyId;
+    private String role = "EMPLOYEE";
 
     public User() {
     }
 
-    public User(String username, String password, String name) {
-        this.username = username;
+    public User(String email, String password, String name) {
+        this.email = email;
         this.password = password;
         this.name = name;
         this.loggedIn = false;
         this.maxAllowedDays = 10;
         this.companyId = null;
+        this.role = "EMPLOYEE";
+        if (email != null && email.contains("@")) {
+            this.displayName = email.substring(0, email.indexOf("@"));
+        } else {
+            this.displayName = email;
+        }
     }
 
-    public User(String username, String password, String name, String companyId) {
-        this(username, password, name);
+    public User(String email, String password, String name, String companyId) {
+        this(email, password, name);
         this.companyId = companyId;
+        this.role = "EMPLOYEE";
     }
 
-    public String getUsername() {
-        return username;
+    public User(String email, String password, String name, String displayName, String companyId) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.displayName = displayName;
+        this.companyId = companyId;
+        this.role = "EMPLOYEE";
+        this.loggedIn = false;
+        this.maxAllowedDays = 10;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public User(String email, String password, String name, String displayName, String companyId, String role) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.displayName = displayName;
+        this.companyId = companyId;
+        this.role = role;
+        this.loggedIn = false;
+        this.maxAllowedDays = 10;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -58,6 +89,14 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public boolean isLoggedIn() {
@@ -85,16 +124,24 @@ public class User {
         this.companyId = companyId;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(username, user.username);
+        return Objects.equals(email, user.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username);
+        return Objects.hash(email);
     }
 }

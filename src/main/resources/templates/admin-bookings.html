@@ -19,6 +19,11 @@
                 <span class="logo-text">SeatSync Admin</span>
             </a>
             
+            <div class="company-badge" th:if="${hasWorkspace}" style="margin: 8px 16px 16px;">
+                <span class="company-badge-label" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-warn);">Workspace</span>
+                <span class="company-badge-name" th:text="${companyName}">Acme Corp</span>
+            </div>
+            
             <nav class="sidebar-nav">
                 <a th:href="@{/admin/bookings}" class="nav-link active">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -30,14 +35,32 @@
                     </svg>
                     <span>All Bookings</span>
                 </a>
+                <a th:href="@{/company-dashboard}" class="nav-link" th:if="${session.companyOwner}" style="color: var(--accent-primary);">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>&larr; Workspace Dashboard</span>
+                </a>
+                <a th:href="@{/dashboard}" class="nav-link" th:unless="${session.companyOwner}" style="color: var(--accent-primary);">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>&larr; Employee Portal</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
                 <div class="user-profile-badge">
-                    <div class="user-avatar" style="color: var(--accent-warn);">A</div>
+                    <div class="user-avatar" style="color: var(--accent-warn);" th:text="${session.displayName != null} ? ${#strings.substring(session.displayName, 0, 1).toUpperCase()} : ${#strings.substring(username, 0, 1).toUpperCase()}">A</div>
                     <div class="user-details">
-                        <span class="user-name" th:text="${username}">admin</span>
-                        <span class="user-role">Administrator</span>
+                        <span class="user-name" th:text="${session.displayName != null} ? ${session.displayName} : ${username}">admin</span>
+                        <span class="user-role" th:text="${session.companyOwner} ? 'Workspace Owner' : 'Workspace Admin'">Administrator</span>
                     </div>
                 </div>
                 <a th:href="@{/logout}" class="btn btn-secondary btn-sm btn-block" style="margin-top: 12px; justify-content: center;">
@@ -54,6 +77,26 @@
         <!-- Main Content -->
         <main class="main-content">
             <div class="container">
+                
+                <!-- Connect Workspace Widget for admin if not linked -->
+                <div th:if="${!hasWorkspace}" class="card" style="margin-bottom: 32px; border-color: rgba(245, 158, 11, 0.3); background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.02));">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-warn); flex-shrink: 0;">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Connect to a Workspace</h3>
+                            <p style="color: var(--text-secondary); font-size: 13px;">Link your admin account to a company workspace to view and manage its bookings.</p>
+                        </div>
+                    </div>
+                    <form th:action="@{/admin/join-workspace}" method="post" style="display: flex; gap: 12px; margin-top: 16px;">
+                        <input type="text" class="form-control" name="companyCode" placeholder="Enter Invite Code (e.g. AB12CD)" required style="text-transform: uppercase; font-family: var(--font-mono); letter-spacing: 1px; font-size: 14px;">
+                        <button type="submit" class="btn btn-warning" style="white-space: nowrap; margin-bottom: 0;">Connect Workspace</button>
+                    </form>
+                </div>
+
                 <div class="flex-between" style="margin-bottom: 24px;">
                     <div>
                         <h1 style="font-size: 32px;">Overview &mdash; <span class="text-gradient" th:text="${monthName} + ' 2026'">Month 2026</span></h1>

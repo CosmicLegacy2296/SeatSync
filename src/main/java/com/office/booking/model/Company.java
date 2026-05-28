@@ -41,6 +41,8 @@ public class Company {
     private String logoBase64;    // optional — stored as base64 data URI
     @Column(nullable = false, unique = true)
     private String companyCode;   // short code for employees to join
+    @Column(nullable = false, unique = true)
+    private String adminCode;     // short code for admins to join
     private LocalDateTime registeredAt;
 
     public Company() {
@@ -49,6 +51,7 @@ public class Company {
         this.floor1Seats = 20;
         this.floor2Seats = 20;
         this.companyCode = generateShortCode();
+        this.adminCode = generateAdminCode();
     }
 
     @PrePersist
@@ -62,6 +65,9 @@ public class Company {
         if (this.companyCode == null || this.companyCode.isBlank()) {
             this.companyCode = generateShortCode();
         }
+        if (this.adminCode == null || this.adminCode.isBlank()) {
+            this.adminCode = generateAdminCode();
+        }
     }
 
     private String generateShortCode() {
@@ -73,7 +79,19 @@ public class Company {
         return sb.toString();
     }
 
+    private String generateAdminCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder("ADM-");
+        for (int i = 0; i < 6; i++) {
+            sb.append(chars.charAt((int) (Math.random() * chars.length())));
+        }
+        return sb.toString();
+    }
+
     // --- Getters & Setters ---
+
+    public String getAdminCode() { return adminCode; }
+    public void setAdminCode(String adminCode) { this.adminCode = adminCode; }
 
     /** @return unique UUID for this company */
     public String getId() { return id; }

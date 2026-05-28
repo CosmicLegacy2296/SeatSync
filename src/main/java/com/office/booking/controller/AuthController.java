@@ -16,7 +16,8 @@ import java.util.Optional;
 
 @Controller
 public class AuthController {
-    private static final String PENDING_EMP_USERNAME = "pendingEmployeeSignupUsername";
+    private static final String PENDING_EMP_EMAIL = "pendingEmployeeSignupEmail";
+    private static final String PENDING_EMP_DISPLAY_NAME = "pendingEmployeeSignupDisplayName";
     private static final String PENDING_EMP_PASSWORD = "pendingEmployeeSignupPassword";
     private static final String PENDING_EMP_NAME = "pendingEmployeeSignupName";
 
@@ -59,19 +60,30 @@ public class AuthController {
 
         Optional<User> user = userService.login(normalizedUsername, password);
         if (user.isPresent()) {
-            session.setAttribute("username", normalizedUsername);
+            session.setAttribute("username", user.get().getEmail());
+            session.setAttribute("displayName", user.get().getDisplayName());
 
             // Check if this user is a registered company owner — redirect accordingly
-            boolean isOwner = companyService.findByOwnerEmail(normalizedUsername).isPresent();
-            if (isOwner) {
-                companyService.findByOwnerEmail(normalizedUsername).ifPresent(company -> {
-                    session.setAttribute("companyId", company.getId());
-                    session.setAttribute("companyOwner", true);
-                });
+            Optional<com.office.booking.model.Company> companyOpt = companyService.findByOwnerEmail(user.get().getEmail());
+            if (companyOpt.isPresent()) {
+                com.office.booking.model.Company company = companyOpt.get();
+                session.setAttribute("companyId", company.getId());
+                session.setAttribute("companyOwner", true);
+                
+                String title = company.getOwnerTitle();
+                if (title != null) {
+                    String lowerTitle = title.toLowerCase();
+                    if (lowerTitle.contains("ceo") || lowerTitle.contains("cto") || 
+                        lowerTitle.contains("manager") || lowerTitle.contains("admin") ||
+                        lowerTitle.contains("director") || lowerTitle.contains("president") ||
+                        lowerTitle.contains("founder") || lowerTitle.contains("owner")) {
+                        session.setAttribute("role", "ADMIN");
+                    }
+                }
                 return "redirect:/company-dashboard";
             }
             
-            // Employee logic
+            // Employee / Admin logic
             if (user.get().getCompanyId() == null) {
                 session.setAttribute("companyOwner", false);
                 return "redirect:/join-company";
@@ -79,6 +91,7 @@ public class AuthController {
             
             session.setAttribute("companyId", user.get().getCompanyId());
             session.setAttribute("companyOwner", false);
+            session.setAttribute("role", user.get().getRole());
             return "redirect:/dashboard";
         } else {
             model.addAttribute("error", "Invalid username or password");
@@ -98,17 +111,23 @@ public class AuthController {
     @PostMapping("/employee-signup")
     public String employeeSignupSubmit(
             @RequestParam String fullName,
-            @RequestParam String username,
+            @RequestParam String email,
+            @RequestParam String displayName,
             @RequestParam String password,
             @RequestParam(required = false) String confirmPassword,
             HttpSession session,
             RedirectAttributes redirectAttrs) {
 
-        String normalizedUsername = username == null ? "" : username.trim().toLowerCase();
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        String normalizedDisplayName = displayName == null ? "" : displayName.trim();
         String normalizedName = fullName == null ? "" : fullName.trim();
 
-        if (normalizedUsername.isBlank() || normalizedName.isBlank() || password == null || password.isBlank()) {
+        if (normalizedEmail.isBlank() || normalizedDisplayName.isBlank() || normalizedName.isBlank() || password == null || password.isBlank()) {
             redirectAttrs.addFlashAttribute("error", "Please fill out all fields.");
+            return "redirect:/employee-signup";
+        }
+        if (!normalizedEmail.contains("@")) {
+            redirectAttrs.addFlashAttribute("error", "Please enter a valid email address.");
             return "redirect:/employee-signup";
         }
         if (password.length() < 8) {
@@ -119,13 +138,18 @@ public class AuthController {
             redirectAttrs.addFlashAttribute("error", "Passwords do not match.");
             return "redirect:/employee-signup";
         }
-        if (userService.existsByUsername(normalizedUsername)) {
-            redirectAttrs.addFlashAttribute("error", "That username is already taken.");
+        if (userService.existsByEmailOrDisplayName(normalizedEmail)) {
+            redirectAttrs.addFlashAttribute("error", "That email address is already registered.");
+            return "redirect:/employee-signup";
+        }
+        if (userService.existsByDisplayName(normalizedDisplayName)) {
+            redirectAttrs.addFlashAttribute("error", "That display name is already in use. Please choose another.");
             return "redirect:/employee-signup";
         }
 
         // Step 1: hold registration info in session until invite code is provided.
-        session.setAttribute(PENDING_EMP_USERNAME, normalizedUsername);
+        session.setAttribute(PENDING_EMP_EMAIL, normalizedEmail);
+        session.setAttribute(PENDING_EMP_DISPLAY_NAME, normalizedDisplayName);
         session.setAttribute(PENDING_EMP_PASSWORD, password);
         session.setAttribute(PENDING_EMP_NAME, normalizedName);
 
@@ -134,7 +158,7 @@ public class AuthController {
 
     @GetMapping("/employee-signup/invite")
     public String employeeInvitePage(HttpSession session, RedirectAttributes redirectAttrs) {
-        if (session.getAttribute(PENDING_EMP_USERNAME) == null) {
+        if (session.getAttribute(PENDING_EMP_EMAIL) == null) {
             return "redirect:/employee-signup";
         }
         return "employee-invite";
@@ -146,11 +170,12 @@ public class AuthController {
             HttpSession session,
             RedirectAttributes redirectAttrs) {
 
-        String pendingUsername = (String) session.getAttribute(PENDING_EMP_USERNAME);
+        String pendingEmail = (String) session.getAttribute(PENDING_EMP_EMAIL);
+        String pendingDisplayName = (String) session.getAttribute(PENDING_EMP_DISPLAY_NAME);
         String pendingPassword = (String) session.getAttribute(PENDING_EMP_PASSWORD);
         String pendingName = (String) session.getAttribute(PENDING_EMP_NAME);
 
-        if (pendingUsername == null || pendingPassword == null || pendingName == null) {
+        if (pendingEmail == null || pendingPassword == null || pendingName == null) {
             redirectAttrs.addFlashAttribute("error", "Your signup session expired. Please start again.");
             return "redirect:/employee-signup";
         }
@@ -162,17 +187,20 @@ public class AuthController {
         }
 
         var company = companyOpt.get();
-        User created = userService.registerEmployee(company.getId(), pendingUsername, pendingPassword, pendingName);
+        User created = userService.registerEmployee(company.getId(), pendingEmail, pendingPassword, pendingName, pendingDisplayName);
         if (created == null) {
-            redirectAttrs.addFlashAttribute("error", "That username is already taken. Please try again.");
+            redirectAttrs.addFlashAttribute("error", "Signup failed. The email or display name may have been taken in the meantime.");
             return "redirect:/employee-signup";
         }
 
         // Log the employee in immediately and route to their dashboard.
-        session.setAttribute("username", created.getUsername());
+        session.setAttribute("username", created.getEmail());
+        session.setAttribute("displayName", created.getDisplayName());
         session.setAttribute("companyId", created.getCompanyId());
         session.setAttribute("companyOwner", false);
-        session.removeAttribute(PENDING_EMP_USERNAME);
+        
+        session.removeAttribute(PENDING_EMP_EMAIL);
+        session.removeAttribute(PENDING_EMP_DISPLAY_NAME);
         session.removeAttribute(PENDING_EMP_PASSWORD);
         session.removeAttribute(PENDING_EMP_NAME);
 

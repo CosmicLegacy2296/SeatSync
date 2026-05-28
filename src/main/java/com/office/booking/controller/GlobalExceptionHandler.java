@@ -19,9 +19,11 @@ public class GlobalExceptionHandler {
 
         String path = request.getRequestURI();
         // Log for debugging, but keep the UI friendly.
+        System.err.println("CRITICAL PATH ERROR: " + path);
+        ex.printStackTrace();
         log.warn("Request failed: {} - {}", path, ex.getMessage(), ex);
 
-        String errorMessage = "Something went wrong. Please try again.";
+        String errorMessage = "Something went wrong. Please try again. Error: " + ex.getMessage();
 
         if (path.startsWith("/login")) {
             redirectAttributes.addFlashAttribute("error", errorMessage);

@@ -10,6 +10,8 @@ public interface CompanyRepository extends JpaRepository<Company, String> {
 
     Optional<Company> findByCompanyCodeIgnoreCase(String companyCode);
 
+    Optional<Company> findByAdminCodeIgnoreCase(String adminCode);
+
     boolean existsByOwnerEmailIgnoreCase(String ownerEmail);
 }
 

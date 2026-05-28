@@ -18,6 +18,11 @@
                 </div>
                 <span class="logo-text">SeatSync</span>
             </a>
+
+            <div class="company-badge">
+                <span class="company-badge-label">Workspace</span>
+                <span class="company-badge-name" th:text="${companyName}">Acme Corp</span>
+            </div>
             
             <nav class="sidebar-nav">
                 <a th:href="@{/dashboard}" class="nav-link active">
@@ -29,14 +34,24 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
+                <a th:if="${session.role == 'ADMIN'}" th:href="@{/admin/bookings}" class="nav-link" style="color: var(--accent-warn);">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Go to Admin Panel &rarr;</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
                 <div class="user-profile-badge">
-                    <div class="user-avatar" th:text="${#strings.substring(username, 0, 1).toUpperCase()}">U</div>
+                    <div class="user-avatar" th:text="${#strings.substring(displayName, 0, 1).toUpperCase()}">U</div>
                     <div class="user-details">
-                        <span class="user-name" th:text="${username}">username</span>
-                        <span class="user-role">Employee</span>
+                        <span class="user-name" th:text="${displayName}">username</span>
+                        <span class="user-role" th:text="${session.role == 'ADMIN'} ? 'Workspace Admin' : 'Employee'">Employee</span>
                     </div>
                 </div>
                 <a th:href="@{/logout}" class="btn btn-secondary btn-sm btn-block" style="margin-top: 12px; justify-content: center;">
@@ -54,7 +69,7 @@
         <main class="main-content">
             <div class="container" th:with="monthNames=${ {'', '', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'} }">
                 <div style="margin-bottom: 32px;">
-                    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Welcome back, <span class="text-gradient" th:text="${username}">Employee</span>!</h1>
+                    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Welcome back, <span class="text-gradient" th:text="${displayName}">Employee</span>!</h1>
                     <p style="color: var(--text-secondary); max-width: 700px;">
                         Select a month below to book or modify your seat reservations. Remember: company policy requires booking a minimum of 6 days and a maximum of 10 days per month.
                     </p>

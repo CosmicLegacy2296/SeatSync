@@ -33,6 +33,60 @@ public class CompanyController {
     private BookingService bookingService;
 
     // -------------------------------------------------------------------------
+    // Company Owner Login
+    // -------------------------------------------------------------------------
+
+    /**
+     * Renders the company owner login page.
+     * Redirects to the company dashboard if already authenticated.
+     */
+    @GetMapping("/company-login")
+    public String companyLoginPage(HttpSession session) {
+        if (Boolean.TRUE.equals(session.getAttribute("companyOwner"))) {
+            return "redirect:/company-dashboard";
+        }
+        return "company-login";
+    }
+
+    /**
+     * Authenticates a company owner by their registered email and password.
+     * Sets session attributes and redirects to the company dashboard on success.
+     */
+    @PostMapping("/company-login")
+    public String companyLogin(@RequestParam String ownerEmail,
+                               @RequestParam String ownerPassword,
+                               HttpSession session,
+                               Model model) {
+        Optional<Company> companyOpt = companyService.findByOwnerEmail(ownerEmail.trim().toLowerCase());
+        if (companyOpt.isEmpty() || !companyOpt.get().getOwnerPassword().equals(ownerPassword)) {
+            model.addAttribute("error", "Invalid email or password. Please try again.");
+            return "company-login";
+        }
+
+        Company company = companyOpt.get();
+
+        // Set session state for company owner
+        session.setAttribute("username", company.getOwnerEmail());
+        session.setAttribute("displayName", company.getOwnerName());
+        session.setAttribute("companyId", company.getId());
+        session.setAttribute("companyOwner", true);
+
+        // Auto-promote high-level titles to ADMIN role
+        String title = company.getOwnerTitle();
+        if (title != null) {
+            String lowerTitle = title.toLowerCase();
+            if (lowerTitle.contains("ceo") || lowerTitle.contains("cto") ||
+                lowerTitle.contains("manager") || lowerTitle.contains("admin") ||
+                lowerTitle.contains("director") || lowerTitle.contains("president") ||
+                lowerTitle.contains("founder") || lowerTitle.contains("owner")) {
+                session.setAttribute("role", "ADMIN");
+            }
+        }
+
+        return "redirect:/company-dashboard";
+    }
+
+    // -------------------------------------------------------------------------
     // Registration Wizard
     // -------------------------------------------------------------------------
 
@@ -151,14 +205,16 @@ public class CompanyController {
         // Save company
         Company saved = companyService.registerCompany(company);
 
-        // Also register owner as a user in UserService so they can log in via /login
-        userService.registerEmployee(saved.getId(), saved.getOwnerEmail(),
+        // Register workspace creator as admin (not in the employee directory)
+        userService.registerAdmin(saved.getId(), saved.getOwnerEmail(),
                 saved.getOwnerPassword(), saved.getOwnerName());
 
         // Set session attributes
         session.setAttribute("username", saved.getOwnerEmail());
+        session.setAttribute("displayName", saved.getOwnerName());
         session.setAttribute("companyId", saved.getId());
         session.setAttribute("companyOwner", true);
+        session.setAttribute("role", "ADMIN");
 
         redirectAttrs.addFlashAttribute("welcomeMessage",
                 "Welcome to SeatSync, " + saved.getDisplayName() + "!");
@@ -190,20 +246,32 @@ public class CompanyController {
         }
 
         Company company = companyOpt.get();
-        List<User> employees = userService.getUsersByCompany(companyId);
+        userService.ensureWorkspaceOwnerIsAdmin(company);
 
-        // Count active bookings this month for stats card
-        int currentMonth = LocalDate.now().getMonthValue();
-        long activeBookingsThisMonth = bookingService.getBookingsForMonth(currentMonth).stream()
-                .filter(b -> employees.stream().anyMatch(e -> e.getUsername().equals(b.getUsername())))
+        List<User> allUsers = userService.getUsersByCompany(companyId);
+        String ownerEmail = company.getOwnerEmail();
+        List<User> employees = allUsers.stream()
+                .filter(u -> !"ADMIN".equals(u.getRole()))
+                .filter(u -> ownerEmail == null || !ownerEmail.equalsIgnoreCase(u.getEmail()))
+                .collect(java.util.stream.Collectors.toList());
+        List<User> admins = allUsers.stream()
+                .filter(u -> "ADMIN".equals(u.getRole())
+                        || (ownerEmail != null && ownerEmail.equalsIgnoreCase(u.getEmail())))
+                .collect(java.util.stream.Collectors.toList());
+
+        // Count all active bookings for this company's users across all months
+        long activeBookings = allUsers.stream()
+                .flatMap(e -> bookingService.getAllUserBookings(companyId, e.getEmail()).stream())
                 .count();
 
         model.addAttribute("company", company);
         model.addAttribute("employees", employees);
+        model.addAttribute("admins", admins);
         model.addAttribute("totalSeats", company.getTotalSeats());
-        model.addAttribute("totalEmployees", employees.size());
-        model.addAttribute("activeBookingsThisMonth", activeBookingsThisMonth);
+        model.addAttribute("totalEmployees", allUsers.size());
+        model.addAttribute("activeBookingsThisMonth", activeBookings);
         model.addAttribute("username", session.getAttribute("username"));
+        model.addAttribute("displayName", session.getAttribute("displayName"));
         model.addAttribute("welcomeMessage", session.getAttribute("welcomeMessage"));
         session.removeAttribute("welcomeMessage");
 
@@ -240,10 +308,73 @@ public class CompanyController {
         User created = userService.registerEmployee(companyId, empUsername.trim().toLowerCase(), empPassword, empName.trim());
         if (created == null) {
             redirectAttrs.addFlashAttribute("error",
-                    "Username '" + empUsername + "' is already taken. Please choose another.");
+                    "Email address '" + empUsername + "' is already in use.");
         } else {
             redirectAttrs.addFlashAttribute("success",
                     "Employee " + empName + " added successfully!");
+        }
+        return "redirect:/company-dashboard";
+    }
+
+    // -------------------------------------------------------------------------
+    // Admin Management (from dashboard)
+    // -------------------------------------------------------------------------
+
+    @PostMapping("/company/add-admin")
+    public String addAdmin(
+            @RequestParam String adminName,
+            @RequestParam String adminUsername,
+            @RequestParam String adminPassword,
+            HttpSession session,
+            RedirectAttributes redirectAttrs) {
+
+        if (!Boolean.TRUE.equals(session.getAttribute("companyOwner"))) {
+            return "redirect:/login";
+        }
+        String companyId = (String) session.getAttribute("companyId");
+
+        User created = userService.registerAdmin(companyId, adminUsername.trim().toLowerCase(), adminPassword, adminName.trim());
+        if (created == null) {
+            redirectAttrs.addFlashAttribute("error",
+                    "Email address '" + adminUsername + "' is already in use.");
+        } else {
+            redirectAttrs.addFlashAttribute("success",
+                    "Admin " + adminName + " added successfully!");
+        }
+        return "redirect:/company-dashboard";
+    }
+
+    @PostMapping("/company/promote-employee")
+    public String promoteEmployee(@RequestParam String email, HttpSession session, RedirectAttributes redirectAttrs) {
+        if (!Boolean.TRUE.equals(session.getAttribute("companyOwner"))) {
+            return "redirect:/login";
+        }
+        Optional<User> updated = userService.promoteToAdmin(email);
+        if (updated.isPresent()) {
+            redirectAttrs.addFlashAttribute("success", "Successfully promoted " + updated.get().getName() + " to Admin!");
+        } else {
+            redirectAttrs.addFlashAttribute("error", "User not found.");
+        }
+        return "redirect:/company-dashboard";
+    }
+
+    @PostMapping("/company/demote-admin")
+    public String demoteAdmin(@RequestParam String email, HttpSession session, RedirectAttributes redirectAttrs) {
+        if (!Boolean.TRUE.equals(session.getAttribute("companyOwner"))) {
+            return "redirect:/login";
+        }
+        String companyId = (String) session.getAttribute("companyId");
+        Optional<Company> companyOpt = companyService.findById(companyId);
+        if (companyOpt.isPresent() && email != null
+                && email.equalsIgnoreCase(companyOpt.get().getOwnerEmail())) {
+            redirectAttrs.addFlashAttribute("error", "The workspace creator cannot be demoted.");
+            return "redirect:/company-dashboard";
+        }
+        Optional<User> updated = userService.demoteToEmployee(email);
+        if (updated.isPresent()) {
+            redirectAttrs.addFlashAttribute("success", "Successfully demoted " + updated.get().getName() + " to Employee!");
+        } else {
+            redirectAttrs.addFlashAttribute("error", "User not found.");
         }
         return "redirect:/company-dashboard";
     }
@@ -258,7 +389,7 @@ public class CompanyController {
             return "redirect:/login";
         }
         String username = (String) session.getAttribute("username");
-        Optional<User> userOpt = userService.findByUsername(username);
+        Optional<User> userOpt = userService.findByEmailOrDisplayName(username);
         if (userOpt.isPresent() && userOpt.get().getCompanyId() != null) {
             return "redirect:/dashboard";
         }

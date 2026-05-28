@@ -50,9 +50,9 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile-badge">
-                    <div class="user-avatar" th:text="${#strings.substring(username, 0, 1).toUpperCase()}">U</div>
+                    <div class="user-avatar" th:text="${#strings.substring(displayName, 0, 1).toUpperCase()}">U</div>
                     <div class="user-details">
-                        <span class="user-name" th:text="${username}">username</span>
+                        <span class="user-name" th:text="${displayName}">username</span>
                         <span class="user-role">Employee</span>
                     </div>
                 </div>

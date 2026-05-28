@@ -43,7 +43,7 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile-badge">
-                    <div class="user-avatar" style="color: var(--accent-warn);">O</div>
+                    <div class="user-avatar" style="color: var(--accent-warn);" th:text="${#strings.substring(company.ownerName, 0, 1).toUpperCase()}">O</div>
                     <div class="user-details">
                         <span class="user-name" th:text="${company.ownerName}">Owner Name</span>
                         <span class="user-role">Workspace Owner</span>
@@ -90,7 +90,7 @@
                 </div>
 
                 <!-- Company Header Profile -->
-                <div class="card" style="margin-bottom: 32px; display: flex; align-items: center; gap: 32px; background: linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.05)); border-color: rgba(99, 102, 241, 0.2);">
+                <div class="card" style="margin-bottom: 32px; display: flex; align-items: center; gap: 32px; background: linear-gradient(135deg, var(--bg-card), rgba(74, 222, 128, 0.04)); border-color: rgba(74, 222, 128, 0.15);">
                     <div style="width: 100px; height: 100px; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-base); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <img th:if="${company.logoBase64 != null}" th:src="${company.logoBase64}" style="width: 100%; height: 100%; object-fit: contain; padding: 12px;" alt="Company Logo">
                         <span th:unless="${company.logoBase64 != null}" style="font-size: 32px; font-weight: 800; color: var(--accent-primary);" th:text="${#strings.substring(company.companyName, 0, 1)}">C</span>
@@ -138,62 +138,143 @@
                 </div>
 
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px;">
-                    <!-- Employees Section -->
-                    <div class="table-container" style="align-self: start;">
-                        <div style="padding: 24px 24px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h3 style="font-size: 18px; margin: 0;">Employee Directory</h3>
+                    <!-- Left Column: Directories -->
+                    <div style="display: flex; flex-direction: column; gap: 32px; align-self: start;">
+                        
+                        <!-- Employees Section -->
+                        <div class="table-container">
+                            <div style="padding: 24px 24px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="font-size: 18px; margin: 0;">Employee Directory</h3>
+                                </div>
+                            </div>
+                            
+                            <!-- Add Employee Form -->
+                            <div style="padding: 16px 24px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-color);">
+                                <form th:action="@{/company/add-employee}" method="post" style="display: flex; gap: 12px; align-items: flex-end;">
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <input type="text" class="form-control" name="empName" placeholder="Full Name" required style="font-size: 14px; padding: 10px 14px;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <input type="email" class="form-control" name="empUsername" placeholder="Email Address" required style="font-size: 14px; padding: 10px 14px;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <input type="password" class="form-control" name="empPassword" placeholder="Temp Password" required style="font-size: 14px; padding: 10px 14px;">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="padding: 10px 16px; font-size: 14px; margin-bottom: 0; white-space: nowrap;">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                <table class="styled-table" style="font-size: 14px;">
+                                    <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email Address</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="emp : ${employees}">
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 12px;">
+                                                    <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-base); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: var(--text-secondary);" th:text="${#strings.substring(emp.name, 0, 1).toUpperCase()}">N</div>
+                                                    <strong th:text="${emp.name}">Name</strong>
+                                                </div>
+                                            </td>
+                                            <td><code style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; color: var(--text-secondary);" th:text="${emp.email}"></code></td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                                    <span class="month-stats-badge" style="margin: 0; padding: 4px 8px; font-size: 11px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-secondary);">Employee</span>
+                                                    
+                                                    <!-- Promote to Admin -->
+                                                    <form th:action="@{/company/promote-employee}" method="post" style="display: inline; margin: 0;">
+                                                        <input type="hidden" name="email" th:value="${emp.email}">
+                                                        <button type="submit" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; min-height: unset; margin: 0; white-space: nowrap;">Promote &uarr;</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        
-                        <!-- Add Employee Form -->
-                        <div style="padding: 16px 24px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-color);">
-                            <form th:action="@{/company/add-employee}" method="post" style="display: flex; gap: 12px; align-items: flex-end;">
-                                <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                    <input type="text" class="form-control" name="empName" placeholder="Full Name" required style="font-size: 14px; padding: 10px 14px;">
+
+                        <!-- Admins Section -->
+                        <div class="table-container">
+                            <div style="padding: 24px 24px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="font-size: 18px; margin: 0; color: var(--accent-warn);">Admin Directory</h3>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                    <input type="text" class="form-control" name="empUsername" placeholder="Username" required style="font-size: 14px; padding: 10px 14px;">
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                    <input type="password" class="form-control" name="empPassword" placeholder="Temp Password" required style="font-size: 14px; padding: 10px 14px;">
-                                </div>
-                                <button type="submit" class="btn btn-primary" style="padding: 10px 16px; font-size: 14px; margin-bottom: 0;">
-                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    </svg>
-                                    Add
-                                </button>
-                            </form>
+                            </div>
+                            
+                            <!-- Add Admin Form -->
+                            <div style="padding: 16px 24px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-color);">
+                                <form th:action="@{/company/add-admin}" method="post" style="display: flex; gap: 12px; align-items: flex-end;">
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <input type="text" class="form-control" name="adminName" placeholder="Full Name" required style="font-size: 14px; padding: 10px 14px;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <input type="email" class="form-control" name="adminUsername" placeholder="Email Address" required style="font-size: 14px; padding: 10px 14px;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <input type="password" class="form-control" name="adminPassword" placeholder="Temp Password" required style="font-size: 14px; padding: 10px 14px;">
+                                    </div>
+                                    <button type="submit" class="btn btn-warning" style="padding: 10px 16px; font-size: 14px; margin-bottom: 0; white-space: nowrap;">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                <table class="styled-table" style="font-size: 14px;">
+                                    <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email Address</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:if="${#lists.isEmpty(admins)}">
+                                            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px;">No custom admins registered. Promoted staff or added admins will appear here.</td>
+                                        </tr>
+                                        <tr th:each="admin : ${admins}">
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 12px;">
+                                                    <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-base); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: var(--text-secondary);" th:text="${#strings.substring(admin.name, 0, 1).toUpperCase()}">A</div>
+                                                    <strong th:text="${admin.name}">Name</strong>
+                                                </div>
+                                            </td>
+                                            <td><code style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; color: var(--text-secondary);" th:text="${admin.email}"></code></td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                                    <span th:if="${admin.email == company.ownerEmail}" class="month-stats-badge valid" style="margin: 0; padding: 4px 8px; font-size: 11px;">Workspace Owner</span>
+                                                    <span th:unless="${admin.email == company.ownerEmail}" class="month-stats-badge warning" style="margin: 0; padding: 4px 8px; font-size: 11px; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.2); color: var(--accent-warn);">Admin</span>
+                                                    
+                                                    <!-- Demote to Employee -->
+                                                    <form th:unless="${admin.email == company.ownerEmail}" th:action="@{/company/demote-admin}" method="post" style="display: inline; margin: 0;">
+                                                        <input type="hidden" name="email" th:value="${admin.email}">
+                                                        <button type="submit" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; min-height: unset; margin: 0; white-space: nowrap;">Demote &darr;</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        
-                        <div style="max-height: 400px; overflow-y: auto;">
-                            <table class="styled-table" style="font-size: 14px;">
-                                <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Username</th>
-                                        <th>Role</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="emp : ${employees}">
-                                        <td>
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-base); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: var(--text-secondary);" th:text="${#strings.substring(emp.name, 0, 1).toUpperCase()}">N</div>
-                                                <strong th:text="${emp.name}">Name</strong>
-                                            </div>
-                                        </td>
-                                        <td><code style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; color: var(--text-secondary);" th:text="${emp.username}"></code></td>
-                                        <td>
-                                            <span th:if="${emp.username == company.ownerEmail}" class="month-stats-badge valid" style="margin: 0; padding: 4px 8px; font-size: 11px;">Owner</span>
-                                            <span th:unless="${emp.username == company.ownerEmail}" class="month-stats-badge" style="margin: 0; padding: 4px 8px; font-size: 11px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-secondary);">Employee</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+
                     </div>
 
                     <!-- Settings Section -->
@@ -201,10 +282,16 @@
                         <h3 style="font-size: 18px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">Workspace Configuration</h3>
                         
                         <div style="display: flex; flex-direction: column; gap: 20px;">
-                            <div style="background: rgba(57, 255, 20, 0.05); border: 1px solid rgba(57, 255, 20, 0.2); padding: 16px; border-radius: var(--radius-md);">
+                            <div style="background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.2); padding: 16px; border-radius: var(--radius-md);">
                                 <div style="font-size: 13px; color: var(--accent-primary); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Invite Employees Code</div>
                                 <div style="font-size: 28px; color: var(--text-primary); font-weight: 800; font-family: var(--font-mono); letter-spacing: 2px;" th:text="${company.companyCode}">CODE</div>
                                 <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Share this code with employees to join your workspace.</div>
+                            </div>
+
+                            <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 16px; border-radius: var(--radius-md);">
+                                <div style="font-size: 13px; color: var(--accent-warn); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Invite Admins Code</div>
+                                <div style="font-size: 28px; color: var(--text-primary); font-weight: 800; font-family: var(--font-mono); letter-spacing: 2px;" th:text="${company.adminCode}">ADMIN CODE</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Share this code with admins to access the Admin Console.</div>
                             </div>
                             
                             <div>

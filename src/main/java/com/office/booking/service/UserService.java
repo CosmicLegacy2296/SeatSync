@@ -1,5 +1,6 @@
 package com.office.booking.service;
 
+import com.office.booking.model.Company;
 import com.office.booking.model.User;
 import com.office.booking.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -18,72 +19,101 @@ public class UserService {
 
     private void seedDefaultUsersIfNeeded() {
         // Seed basic accounts so the UI doesn't break on first run.
-        // (Passwords remain plaintext for dev/demo.)
-        createUserIfNotExists("user1", "password1", "John Doe");
-        createUserIfNotExists("user2", "password2", "Jane Smith");
-        createUserIfNotExists("user3", "password3", "User Three");
-        createUserIfNotExists("admin", "admin", "Admin User");
+        createUserIfNotExists("user1@seatsync.dev", "password1", "John Doe");
+        createUserIfNotExists("user2@seatsync.dev", "password2", "Jane Smith");
+        createUserIfNotExists("user3@seatsync.dev", "password3", "User Three");
     }
 
-    private void createUserIfNotExists(String username, String password, String name) {
-        if (username == null || username.isBlank()) return;
-        if (!userRepository.existsById(username)) {
-            userRepository.save(new User(username, password, name));
+    private void createUserIfNotExists(String email, String password, String name) {
+        if (email == null || email.isBlank()) return;
+        if (!userRepository.existsById(email)) {
+            userRepository.save(new User(email, password, name));
         }
     }
 
-    public void logout(String username) {
+    public void logout(String email) {
         // No persisted "logged in" state; session controls auth.
     }
 
-    public Optional<User> findByUsername(String username) {
-        if (username == null || username.isBlank()) return Optional.empty();
-        return userRepository.findById(username);
+    public Optional<User> findByEmailOrDisplayName(String id) {
+        if (id == null || id.isBlank()) return Optional.empty();
+        Optional<User> byEmail = userRepository.findById(id);
+        if (byEmail.isPresent()) {
+            return byEmail;
+        }
+        return userRepository.findByDisplayName(id);
     }
 
-    public boolean existsByUsername(String username) {
-        if (username == null || username.isBlank()) return false;
-        return userRepository.existsById(username);
+    public boolean existsByEmailOrDisplayName(String id) {
+        if (id == null || id.isBlank()) return false;
+        return userRepository.existsById(id) || userRepository.existsByDisplayName(id);
     }
 
-    public Optional<User> login(String username, String password) {
-        if (username == null || username.isBlank() || password == null) return Optional.empty();
-        return userRepository.findById(username)
-                .filter(u -> u.getPassword() != null && u.getPassword().equals(password));
+    public boolean existsByDisplayName(String displayName) {
+        if (displayName == null || displayName.isBlank()) return false;
+        return userRepository.existsByDisplayName(displayName);
     }
 
-    public void setMaxAllowedDays(String username, int maxAllowedDays) {
-        if (username == null || username.isBlank()) return;
-        userRepository.findById(username).ifPresent(u -> {
+    public Optional<User> login(String loginId, String password) {
+        if (loginId == null || loginId.isBlank() || password == null) return Optional.empty();
+        Optional<User> user = userRepository.findById(loginId);
+        if (user.isEmpty()) {
+            user = userRepository.findByDisplayName(loginId);
+        }
+        return user.filter(u -> u.getPassword() != null && u.getPassword().equals(password));
+    }
+
+    public void setMaxAllowedDays(String email, int maxAllowedDays) {
+        if (email == null || email.isBlank()) return;
+        userRepository.findById(email).ifPresent(u -> {
             u.setMaxAllowedDays(maxAllowedDays);
             userRepository.save(u);
         });
     }
 
-    public int getMaxAllowedDays(String username) {
-        if (username == null || username.isBlank()) return 10;
-        return userRepository.findById(username)
+    public int getMaxAllowedDays(String email) {
+        if (email == null || email.isBlank()) return 10;
+        return userRepository.findById(email)
                 .map(User::getMaxAllowedDays)
                 .orElse(10);
     }
 
     /**
-     * Registers a new employee scoped to a specific company.
-     * Used by company owners via the company dashboard.
-     *
-     * @param companyId the UUID of the company this employee belongs to
-     * @param username  the desired username (must be unique)
-     * @param password  the temporary plaintext password
-     * @param name      the employee's full name
-     * @return the created User, or null if username is already taken
+     * Registers a new employee scoped to a specific company with a custom display name.
      */
-    public User registerEmployee(String companyId, String username, String password, String name) {
-        if (username == null || username.isBlank()) return null;
-        if (userRepository.existsById(username)) {
-            return null; // username already taken
+    public User registerEmployee(String companyId, String email, String password, String name, String displayName) {
+        if (email == null || email.isBlank()) return null;
+        if (userRepository.existsById(email)) {
+            return null; // email already taken
         }
-        User user = new User(username, password, name, companyId);
+        if (displayName != null && !displayName.isBlank() && userRepository.existsByDisplayName(displayName)) {
+            return null; // displayName already taken
+        }
+        User user = new User(email, password, name, displayName, companyId);
         return userRepository.save(user);
+    }
+
+    /**
+     * Registers a new employee scoped to a specific company (auto-generating unique display name).
+     * Used by company owners via the company dashboard.
+     */
+    public User registerEmployee(String companyId, String email, String password, String name) {
+        if (email == null || email.isBlank()) return null;
+        String displayName = null;
+        if (email.contains("@")) {
+            displayName = email.substring(0, email.indexOf("@"));
+        } else {
+            displayName = email;
+        }
+        
+        int count = 1;
+        String baseDisplayName = displayName;
+        while (userRepository.existsByDisplayName(displayName)) {
+            displayName = baseDisplayName + count;
+            count++;
+        }
+        
+        return registerEmployee(companyId, email, password, name, displayName);
     }
 
     /**
@@ -91,9 +121,9 @@ public class UserService {
      *
      * @return updated user, or empty if the user doesn't exist.
      */
-    public Optional<User> assignCompanyToUser(String username, String companyId) {
-        if (username == null || username.isBlank()) return Optional.empty();
-        return userRepository.findById(username).map(u -> {
+    public Optional<User> assignCompanyToUser(String email, String companyId) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        return userRepository.findById(email).map(u -> {
             u.setCompanyId(companyId);
             return userRepository.save(u);
         });
@@ -108,5 +138,79 @@ public class UserService {
     public List<User> getUsersByCompany(String companyId) {
         if (companyId == null || companyId.isBlank()) return List.of();
         return userRepository.findByCompanyId(companyId);
+    }
+
+    /**
+     * Registers a new admin scoped to a specific company with a custom display name.
+     */
+    public User registerAdmin(String companyId, String email, String password, String name, String displayName) {
+        if (email == null || email.isBlank()) return null;
+        if (userRepository.existsById(email)) {
+            return null; // email already taken
+        }
+        if (displayName != null && !displayName.isBlank() && userRepository.existsByDisplayName(displayName)) {
+            return null; // displayName already taken
+        }
+        User user = new User(email, password, name, displayName, companyId, "ADMIN");
+        return userRepository.save(user);
+    }
+
+    /**
+     * Registers a new admin scoped to a specific company (auto-generating unique display name).
+     */
+    public User registerAdmin(String companyId, String email, String password, String name) {
+        if (email == null || email.isBlank()) return null;
+        String displayName = null;
+        if (email.contains("@")) {
+            displayName = email.substring(0, email.indexOf("@"));
+        } else {
+            displayName = email;
+        }
+        
+        int count = 1;
+        String baseDisplayName = displayName;
+        while (userRepository.existsByDisplayName(displayName)) {
+            displayName = baseDisplayName + count;
+            count++;
+        }
+        
+        return registerAdmin(companyId, email, password, name, displayName);
+    }
+
+    /**
+     * Promotes a user to the ADMIN role.
+     */
+    public Optional<User> promoteToAdmin(String email) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        return userRepository.findById(email).map(u -> {
+            u.setRole("ADMIN");
+            return userRepository.save(u);
+        });
+    }
+
+    /**
+     * Ensures the company workspace creator is stored as ADMIN (fixes legacy registrations).
+     */
+    public void ensureWorkspaceOwnerIsAdmin(Company company) {
+        if (company == null || company.getOwnerEmail() == null || company.getOwnerEmail().isBlank()) {
+            return;
+        }
+        userRepository.findById(company.getOwnerEmail().toLowerCase()).ifPresent(u -> {
+            if (company.getId().equals(u.getCompanyId()) && !"ADMIN".equals(u.getRole())) {
+                u.setRole("ADMIN");
+                userRepository.save(u);
+            }
+        });
+    }
+
+    /**
+     * Demotes an admin back to the EMPLOYEE role.
+     */
+    public Optional<User> demoteToEmployee(String email) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        return userRepository.findById(email).map(u -> {
+            u.setRole("EMPLOYEE");
+            return userRepository.save(u);
+        });
     }
 }

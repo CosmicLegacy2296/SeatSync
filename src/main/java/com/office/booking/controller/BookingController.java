@@ -4,6 +4,8 @@ import com.office.booking.model.Booking;
 import com.office.booking.model.BookingExtensionRequest;
 import com.office.booking.model.Floor;
 import com.office.booking.service.BookingService;
+import com.office.booking.service.CompanyService;
+import com.office.booking.model.Company;
 import com.office.booking.service.ExtensionRequestService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,9 @@ public class BookingController {
     @Autowired
     private ExtensionRequestService extensionRequestService;
 
+    @Autowired
+    private CompanyService companyService;
+
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
         String username = (String) session.getAttribute("username");
@@ -49,6 +54,9 @@ public class BookingController {
         }
 
         model.addAttribute("username", username);
+        model.addAttribute("displayName", session.getAttribute("displayName"));
+        String companyName = companyId != null ? companyService.findById(companyId).map(Company::getDisplayName).orElse("Workspace") : "Workspace";
+        model.addAttribute("companyName", companyName);
         model.addAttribute("monthBookingCounts", monthBookingCounts);
         model.addAttribute("currentMonth", java.time.LocalDate.now().getMonthValue());
         return "dashboard";
@@ -84,6 +92,7 @@ public class BookingController {
         model.addAttribute("userBookings", userBookings);
         model.addAttribute("validation", validation);
         model.addAttribute("username", username);
+        model.addAttribute("displayName", session.getAttribute("displayName"));
         model.addAttribute("maxAllowedDays", extensionRequestService.getApprovedMaxForUserMonthYear(username, month, 2026));
         model.addAttribute("daysInMonth", java.time.Year.of(2026).atMonth(month).lengthOfMonth());
 
@@ -206,6 +215,7 @@ public class BookingController {
         model.addAttribute("bookedSeats", bookedSeats);
         model.addAttribute("floors", floors);
         model.addAttribute("username", username);
+        model.addAttribute("displayName", session.getAttribute("displayName"));
         model.addAttribute("editMode", Boolean.TRUE.equals(editMode));
         model.addAttribute("currentBooking", currentBooking);
         model.addAttribute("existingSeatId", existingSeatId);
@@ -276,6 +286,7 @@ public class BookingController {
         Boolean editMode = (Boolean) session.getAttribute(SESSION_EDIT_MODE);
         model.addAttribute("rows", rows);
         model.addAttribute("username", username);
+        model.addAttribute("displayName", session.getAttribute("displayName"));
         model.addAttribute("month", month != null ? month : 2);
         model.addAttribute("editMode", Boolean.TRUE.equals(editMode));
         model.addAttribute("totalDates", selectedDates.size());

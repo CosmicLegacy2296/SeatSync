@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log in as Employee - SeatSync</title>
+    <title>Manage Company - SeatSync</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -21,8 +21,8 @@
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                     </svg>
                 </a>
-                <h1 class="logo-text" style="margin-top: 12px;">Log in as Employee</h1>
-                <p>Access your workspace seat bookings</p>
+                <h1 class="logo-text" style="margin-top: 12px;">Manage Company</h1>
+                <p>Sign in to your company workspace dashboard</p>
             </div>
 
             <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
@@ -34,15 +34,15 @@
                 <span th:text="${error}">Invalid credentials</span>
             </div>
 
-            <form th:action="@{/login}" method="post">
+            <form th:action="@{/company-login}" method="post">
                 <div class="form-group">
-                    <label class="form-label" for="username">Email Address</label>
-                    <input class="form-control" type="email" id="username" name="username" placeholder="you@company.com" required autocomplete="username">
+                    <label class="form-label" for="ownerEmail">Owner Email Address</label>
+                    <input class="form-control" type="email" id="ownerEmail" name="ownerEmail" placeholder="owner@company.com" required autocomplete="username">
                 </div>
 
                 <div class="form-group" style="position: relative;">
-                    <label class="form-label" for="password">Password</label>
-                    <input class="form-control" type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 48px;">
+                    <label class="form-label" for="ownerPassword">Password</label>
+                    <input class="form-control" type="password" id="ownerPassword" name="ownerPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 48px;">
                     <button type="button" id="togglePassword" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <svg id="eyeOpenIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -55,33 +55,20 @@
                     </button>
                 </div>
 
-                <div class="form-footer" style="margin-bottom: 24px;">
-                    <label class="form-checkbox-label">
-                        <input type="checkbox" class="form-checkbox" name="rememberMe">
-                        <span>Remember me</span>
-                    </label>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 8px;">Sign In to Dashboard</button>
             </form>
 
-            <div class="login-divider">Don't have an account?</div>
+            <div class="login-divider">New to SeatSync?</div>
 
-            <a th:href="@{/employee-signup}" class="btn btn-secondary btn-block" style="justify-content: center; display: flex; align-items: center;">
-                Create Account
+            <a th:href="@{/register}" class="btn btn-secondary btn-block" style="justify-content: center; display: flex; align-items: center;">
+                Register a New Company
             </a>
-
-            <div style="text-align: center; margin-top: 24px;">
-                <a th:href="@{/admin-login}" class="form-link" style="font-size: 13px; color: var(--text-muted);">
-                    Workspace admin? Sign in to Admin Console &rarr;
-                </a>
-            </div>
         </div>
     </div>
 
     <script>
         const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
+        const password = document.querySelector('#ownerPassword');
         const eyeOpenIcon = document.querySelector('#eyeOpenIcon');
         const eyeClosedIcon = document.querySelector('#eyeClosedIcon');
 

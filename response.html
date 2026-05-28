@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeatSync — Workspace Booking Redefined</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <div class="login-wrapper">
         <div class="container" style="max-width: 1000px; width: 100%;">
             <div class="login-header">
-                <a th:href="@{/}" class="logo-icon" style="text-decoration: none; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                <a href="/" class="logo-icon" style="text-decoration: none; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                     </svg>
@@ -21,22 +21,20 @@
                 </p>
             </div>
 
-            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 24px;">
+            <div class="alert alert-error" style="margin-bottom: 24px;">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <span th:text="${error}">Error</span>
+                <span>Something went wrong. Please try again. Error: Handler dispatch failed: java.lang.Error: Unresolved compilation problems: 
+	Optional cannot be resolved to a type
+	Optional cannot be resolved to a type
+	Optional cannot be resolved to a type
+</span>
             </div>
 
-            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px;">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                <span th:text="${success}">Success</span>
-            </div>
+            
 
             <div class="landing-grid">
                 <div class="landing-card" style="border-top: 3px solid var(--accent-primary);">
@@ -54,7 +52,7 @@
                             Reserve your desk, view your personal booking calendar, and request booking extensions seamlessly.
                         </p>
                     </div>
-                    <a th:href="@{/login}" class="btn btn-primary btn-block">
+                    <a href="/login" class="btn btn-primary btn-block">
                         Sign In as Employee
                     </a>
                 </div>
@@ -72,7 +70,7 @@
                             Manage office floor plans, approve extensions, view dashboard statistics, and export booking sheets to CSV.
                         </p>
                     </div>
-                    <a th:href="@{/admin-login}" class="btn btn-secondary btn-block">
+                    <a href="/admin-login" class="btn btn-secondary btn-block">
                         Sign In as Admin
                     </a>
                 </div>
@@ -84,21 +82,14 @@
                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                             </svg>
                         </div>
-                        <h3>Manage Company</h3>
+                        <h3>Register Workspace</h3>
                         <p>
-                            Access your company dashboard, manage employees, view booking analytics, and configure your workspace.
+                            New to SeatSync? Set up your company workspace, configure floors, seats, and onboard your employees.
                         </p>
                     </div>
-                    <div>
-                        <a th:href="@{/company-login}" class="btn btn-warning btn-block">
-                            Sign In as Owner
-                        </a>
-                        <div style="text-align: center; margin-top: 14px;">
-                            <a th:href="@{/register}" class="form-link" style="font-size: 13px; color: var(--text-muted);">
-                                New company? Register here &rarr;
-                            </a>
-                        </div>
-                    </div>
+                    <a href="/register" class="btn btn-warning btn-block">
+                        Register Company
+                    </a>
                 </div>
             </div>
             

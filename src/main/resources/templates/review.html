@@ -43,9 +43,9 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile-badge">
-                    <div class="user-avatar" th:text="${#strings.substring(username, 0, 1).toUpperCase()}">U</div>
+                    <div class="user-avatar" th:text="${#strings.substring(displayName, 0, 1).toUpperCase()}">U</div>
                     <div class="user-details">
-                        <span class="user-name" th:text="${username}">username</span>
+                        <span class="user-name" th:text="${displayName}">username</span>
                         <span class="user-role">Employee</span>
                     </div>
                 </div>
@@ -70,8 +70,8 @@
                     </p>
                 </div>
 
-                <div class="table-container" style="margin-bottom: 32px; overflow: hidden; border: 1px solid var(--accent-primary); box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);">
-                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); padding: 20px 24px; border-bottom: 1px solid var(--border-color);">
+                <div class="table-container" style="margin-bottom: 32px; overflow: hidden; border: 1px solid var(--accent-primary); box-shadow: 0 0 20px rgba(74, 222, 128, 0.1);">
+                    <div style="background: linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(34, 197, 94, 0.1)); padding: 20px 24px; border-bottom: 1px solid var(--border-color);">
                         <h3 style="font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px;">
                             <svg width="20" height="20" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>

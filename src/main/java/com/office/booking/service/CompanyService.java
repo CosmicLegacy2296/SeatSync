@@ -69,6 +69,17 @@ public class CompanyService {
     }
 
     /**
+     * Looks up a company by its generated admin short code.
+     *
+     * @param code the company admin code
+     * @return an Optional containing the company, or empty if not found
+     */
+    public Optional<Company> findByAdminCode(String code) {
+        if (code == null) return Optional.empty();
+        return companyRepository.findByAdminCodeIgnoreCase(code);
+    }
+
+    /**
      * Returns all registered companies.
      *
      * @return an unmodifiable list of all companies

@@ -8,7 +8,13 @@
 </head>
 <body>
     <div class="login-wrapper">
-        <div class="card login-box" th:classappend="${error != null} ? 'input-error' : ''">
+        <div class="card login-box" th:classappend="${error != null} ? 'input-error' : ''" style="position: relative;">
+            <a th:href="@{/}" class="login-close-btn" title="Back to Landing Page">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </a>
             <div class="login-header">
                 <div class="logo-icon" style="background: linear-gradient(135deg, var(--accent-secondary), var(--accent-warn));">
                     <svg viewBox="0 0 24 24">
@@ -32,8 +38,8 @@
 
             <form th:action="@{/admin-login}" method="post">
                 <div class="form-group">
-                    <label class="form-label" for="username">Username</label>
-                    <input class="form-control" type="text" id="username" name="username" placeholder="e.g. admin" required autocomplete="username">
+                    <label class="form-label" for="username">Email Address</label>
+                    <input class="form-control" type="email" id="username" name="username" placeholder="admin@company.com" required autocomplete="username">
                 </div>
 
                 <div class="form-group" style="position: relative;">
@@ -52,9 +58,9 @@
                 </div>
 
                 <div class="form-group" style="position: relative;">
-                    <label class="form-label" for="securityCode">Security Code</label>
-                    <input class="form-control" type="password" id="securityCode" name="securityCode" placeholder="SEC•••" required autocomplete="off" style="padding-right: 48px;">
-                    <button type="button" id="toggleSecurityCode" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <label class="form-label" for="adminCode">Admin Code</label>
+                    <input class="form-control" type="password" id="adminCode" name="adminCode" placeholder="ADM-••••••" required autocomplete="off" style="padding-right: 48px;">
+                    <button type="button" id="toggleAdminCode" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <svg id="secEyeOpenIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
@@ -72,15 +78,6 @@
 
                 <button type="submit" class="btn btn-warning btn-block">Access Admin Console</button>
             </form>
-
-            <div class="info-box" style="margin-top: 24px; font-size: 13px;">
-                <div style="font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Default Admin Credentials:</div>
-                <div style="display: flex; flex-direction: column; gap: 4px; color: var(--text-secondary);">
-                    <div>Username: <code>admin</code></div>
-                    <div>Password: <code>admin</code></div>
-                    <div>Security Code: <code>SEC123</code></div>
-                </div>
-            </div>
             
             <div style="text-align: center; margin-top: 24px;">
                 <a th:href="@{/}" class="form-link" style="font-size: 14px;">&larr; Back to Landing Page</a>
@@ -106,14 +103,14 @@
             }
         });
 
-        const toggleSecurityCode = document.querySelector('#toggleSecurityCode');
-        const securityCode = document.querySelector('#securityCode');
+        const toggleAdminCode = document.querySelector('#toggleAdminCode');
+        const adminCode = document.querySelector('#adminCode');
         const secEyeOpenIcon = document.querySelector('#secEyeOpenIcon');
         const secEyeClosedIcon = document.querySelector('#secEyeClosedIcon');
 
-        toggleSecurityCode.addEventListener('click', function () {
-            const type = securityCode.getAttribute('type') === 'password' ? 'text' : 'password';
-            securityCode.setAttribute('type', type);
+        toggleAdminCode.addEventListener('click', function () {
+            const type = adminCode.getAttribute('type') === 'password' ? 'text' : 'password';
+            adminCode.setAttribute('type', type);
             if (type === 'password') {
                 secEyeOpenIcon.style.display = 'block';
                 secEyeClosedIcon.style.display = 'none';

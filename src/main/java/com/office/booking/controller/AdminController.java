@@ -19,12 +19,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
 public class AdminController {
-
-    private static final String ADMIN_SECURITY_CODE = "SEC123";
 
     @Autowired
     private UserService userService;
@@ -34,6 +33,9 @@ public class AdminController {
 
     @Autowired
     private ExtensionRequestService extensionRequestService;
+
+    @Autowired
+    private com.office.booking.service.CompanyService companyService;
 
     @GetMapping("/admin-login")
     public String adminLoginPage(HttpSession session) {
@@ -47,27 +49,50 @@ public class AdminController {
     @PostMapping("/admin-login")
     public String adminLogin(@RequestParam String username,
                              @RequestParam String password,
-                             @RequestParam("securityCode") String securityCode,
+                             @RequestParam("adminCode") String adminCode,
                              HttpSession session,
                              Model model) {
-        if (!"admin".equals(username)) {
-            model.addAttribute("error", "Invalid admin credentials.");
+        if (adminCode == null || adminCode.isBlank()) {
+            model.addAttribute("error", "Admin code is required.");
             return "admin-login";
         }
 
-        if (!ADMIN_SECURITY_CODE.equals(securityCode)) {
-            model.addAttribute("error", "Invalid security code.");
+        Optional<com.office.booking.model.Company> companyOpt = companyService.findByAdminCode(adminCode.trim());
+        if (companyOpt.isEmpty()) {
+            model.addAttribute("error", "Invalid admin code.");
             return "admin-login";
         }
+        com.office.booking.model.Company company = companyOpt.get();
 
-        var userOpt = userService.login(username, password);
+        String normalizedUsername = username == null ? "" : username.trim().toLowerCase();
+        var userOpt = userService.login(normalizedUsername, password);
         if (userOpt.isEmpty()) {
-            model.addAttribute("error", "Invalid admin credentials.");
+            model.addAttribute("error", "Invalid email or password.");
             return "admin-login";
         }
+        com.office.booking.model.User user = userOpt.get();
 
-        session.setAttribute("username", username);
-        session.setAttribute("user", userOpt.get());
+        // Onboard user to the company workspace as an admin if they have no workspace
+        if (user.getCompanyId() == null) {
+            userService.assignCompanyToUser(user.getEmail(), company.getId());
+            userService.promoteToAdmin(user.getEmail());
+            user.setCompanyId(company.getId());
+            user.setRole("ADMIN");
+        } else if (!user.getCompanyId().equals(company.getId())) {
+            model.addAttribute("error", "This user is registered to a different company.");
+            return "admin-login";
+        } else {
+            // Ensure they are promoted to admin role in database
+            if (!"ADMIN".equals(user.getRole())) {
+                userService.promoteToAdmin(user.getEmail());
+                user.setRole("ADMIN");
+            }
+        }
+
+        session.setAttribute("username", user.getEmail());
+        session.setAttribute("displayName", user.getDisplayName());
+        session.setAttribute("companyId", company.getId());
+        session.setAttribute("companyOwner", false);
         session.setAttribute("role", "ADMIN");
 
         return "redirect:/admin/bookings";
@@ -80,7 +105,32 @@ public class AdminController {
         String username = (String) session.getAttribute("username");
         String role = (String) session.getAttribute("role");
 
-        if (username == null || !"ADMIN".equals(role)) {
+        if (username == null) {
+            return "redirect:/admin-login";
+        }
+
+        // Auto-promote company owners with high-level titles to ADMIN role in their active session
+        if (!"ADMIN".equals(role) && Boolean.TRUE.equals(session.getAttribute("companyOwner"))) {
+            String companyId = (String) session.getAttribute("companyId");
+            if (companyId != null) {
+                Optional<com.office.booking.model.Company> companyOpt = companyService.findById(companyId);
+                if (companyOpt.isPresent()) {
+                    String title = companyOpt.get().getOwnerTitle();
+                    if (title != null) {
+                        String lowerTitle = title.toLowerCase();
+                        if (lowerTitle.contains("ceo") || lowerTitle.contains("cto") || 
+                            lowerTitle.contains("manager") || lowerTitle.contains("admin") ||
+                            lowerTitle.contains("director") || lowerTitle.contains("president") ||
+                            lowerTitle.contains("founder") || lowerTitle.contains("owner")) {
+                            session.setAttribute("role", "ADMIN");
+                            role = "ADMIN";
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!"ADMIN".equals(role)) {
             return "redirect:/admin-login";
         }
 
@@ -88,6 +138,26 @@ public class AdminController {
 
         List<Booking> bookings = bookingService.getBookingsForMonth(selectedMonth);
         List<BookingExtensionRequest> pendingExtensionRequests = extensionRequestService.findPendingRequests();
+
+        // Scope bookings and stats to this company workspace if connected
+        String companyName = null;
+        String companyCode = null;
+        boolean hasWorkspace = false;
+
+        Optional<com.office.booking.model.User> adminUserOpt = userService.findByEmailOrDisplayName(username);
+        if (adminUserOpt.isPresent() && adminUserOpt.get().getCompanyId() != null) {
+            String adminCompanyId = adminUserOpt.get().getCompanyId();
+            bookings = bookings.stream()
+                    .filter(b -> adminCompanyId.equals(b.getCompanyId()))
+                    .collect(Collectors.toList());
+            
+            Optional<com.office.booking.model.Company> companyOpt = companyService.findById(adminCompanyId);
+            if (companyOpt.isPresent()) {
+                companyName = companyOpt.get().getDisplayName();
+                companyCode = companyOpt.get().getCompanyCode();
+                hasWorkspace = true;
+            }
+        }
 
         long uniqueEmployees = bookings.stream()
                 .map(Booking::getUsername).distinct().count();
@@ -99,8 +169,35 @@ public class AdminController {
         model.addAttribute("pendingExtensionRequests", pendingExtensionRequests);
         model.addAttribute("totalBookings", bookings.size());
         model.addAttribute("uniqueEmployees", uniqueEmployees);
+        model.addAttribute("companyName", companyName);
+        model.addAttribute("companyCode", companyCode);
+        model.addAttribute("hasWorkspace", hasWorkspace);
 
         return "admin-bookings";
+    }
+
+    @PostMapping("/admin/join-workspace")
+    public String adminJoinWorkspace(@RequestParam String companyCode,
+                                     HttpSession session,
+                                     RedirectAttributes redirectAttrs) {
+        String username = (String) session.getAttribute("username");
+        String role = (String) session.getAttribute("role");
+        if (username == null || !"ADMIN".equals(role)) {
+            return "redirect:/admin-login";
+        }
+
+        Optional<com.office.booking.model.Company> companyOpt = companyService.findByCompanyCode(companyCode.trim());
+        if (companyOpt.isPresent()) {
+            com.office.booking.model.Company company = companyOpt.get();
+            Optional<com.office.booking.model.User> updatedUserOpt = userService.assignCompanyToUser(username, company.getId());
+            if (updatedUserOpt.isPresent()) {
+                redirectAttrs.addFlashAttribute("success", "Successfully connected Admin Console to workspace: " + company.getDisplayName() + "!");
+                return "redirect:/admin/bookings";
+            }
+        }
+
+        redirectAttrs.addFlashAttribute("error", "Invalid company code. Please try again.");
+        return "redirect:/admin/bookings";
     }
 
     @PostMapping("/admin/delete-booking")

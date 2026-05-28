@@ -1,6 +1,7 @@
 package com.office.booking.controller;
 
 import com.office.booking.service.UserService;
+import com.office.booking.service.CompanyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,11 +21,14 @@ class AuthControllerTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private CompanyService companyService;
+
     @Test
-    void testIndexRedirectsToLogin() throws Exception {
+    void testIndexPageLoadsLanding() throws Exception {
         mockMvc.perform(get("/"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("landing"));
     }
 
     @Test
