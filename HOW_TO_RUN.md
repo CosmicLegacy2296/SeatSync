@@ -8,23 +8,23 @@
    ```
    If not installed, download from: https://adoptium.net/
 
-2. **Maven 3.6 or higher** - Check if installed:
+2. **Node.js 16+** (for `npm start`) - Check with `node -version`
+
+3. **Maven** (optional) - `npm start` will download Maven into `./maven_local` automatically if it is not installed. You can also install Maven yourself:
    ```bash
    mvn -version
    ```
-   If not installed:
    - **macOS**: `brew install maven`
-   - **Linux**: `sudo apt-get install maven` (Ubuntu/Debian) or `sudo yum install maven` (CentOS/RHEL)
-   - **Windows**: Download from https://maven.apache.org/download.cgi
 
 ## Running the Application
 
 ### Option 1: Using npm Scripts (Recommended)
 
-If you have Node.js installed, you can use the npm scripts defined in `package.json`. Node.js is only used as a task runner wrapper here.
+If you have Node.js installed, use the npm scripts in `package.json`. On first run, Maven may be downloaded once into `./maven_local` (gitignored).
 
 1. **Run the application**:
    ```bash
+   npm install   # optional; no npm dependencies, but validates Node is available
    npm start
    ```
 

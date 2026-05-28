@@ -20,6 +20,6 @@ then
     exit 1
 fi
 
-# Build and run
-$MVN_CMD clean spring-boot:run
+# Build and run (skip tests for faster startup; omit clean for quicker restarts)
+$MVN_CMD spring-boot:run -DskipTests
 
