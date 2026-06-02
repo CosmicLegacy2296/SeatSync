@@ -19,6 +19,8 @@ public class User {
     private int maxAllowedDays = 10;
     /** ID of the company this user belongs to; null for legacy/dev accounts */
     private String companyId;
+    /** Human-readable organization/workspace name for this user. */
+    private String organizationName;
     private String role = "EMPLOYEE";
 
     public User() {
@@ -130,6 +132,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
     }
 
     @Override

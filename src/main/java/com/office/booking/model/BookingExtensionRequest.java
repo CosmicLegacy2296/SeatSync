@@ -1,26 +1,38 @@
 package com.office.booking.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 import java.util.Objects;
 
+@Entity
+@Table(name = "booking_extension_requests")
 public class BookingExtensionRequest {
     public static final String PENDING = "PENDING";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String companyId;
     private String username;
     private int requestedDays;
+    @Column(name = "extension_month")
     private int month;
+    @Column(name = "extension_year")
     private int year;
     private String status;
-
-    private static long nextId = 1;
 
     public BookingExtensionRequest() {
     }
 
-    public BookingExtensionRequest(String username, int requestedDays, int month, int year) {
-        this.id = nextId++;
+    public BookingExtensionRequest(String companyId, String username, int requestedDays, int month, int year) {
+        this.companyId = companyId;
         this.username = username;
         this.requestedDays = requestedDays;
         this.month = month;
@@ -38,6 +50,14 @@ public class BookingExtensionRequest {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(String companyId) {
+        this.companyId = companyId;
     }
 
     public void setUsername(String username) {

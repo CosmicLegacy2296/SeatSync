@@ -40,6 +40,16 @@ public class GlobalExceptionHandler {
             return "redirect:/employee-signup";
         }
 
+        if (path.startsWith("/register")) {
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+            return "redirect:/register";
+        }
+
+        if (path.startsWith("/company")) {
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+            return "redirect:/company-login";
+        }
+
         redirectAttributes.addFlashAttribute("error", errorMessage);
         return "redirect:/";
     }

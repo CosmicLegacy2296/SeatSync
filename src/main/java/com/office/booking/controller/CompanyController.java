@@ -4,6 +4,7 @@ import com.office.booking.model.Company;
 import com.office.booking.model.User;
 import com.office.booking.service.BookingService;
 import com.office.booking.service.CompanyService;
+import com.office.booking.service.WorkspaceLayoutService;
 import com.office.booking.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ public class CompanyController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private WorkspaceLayoutService workspaceLayoutService;
 
     // -------------------------------------------------------------------------
     // Company Owner Login
@@ -182,6 +186,13 @@ public class CompanyController {
             return "redirect:/register";
         }
 
+        // Validate password length
+        if (ownerPassword == null || ownerPassword.length() < 8) {
+            redirectAttrs.addFlashAttribute("error",
+                    "Password must be at least 8 characters.");
+            return "redirect:/register";
+        }
+
         // Build company object
         Company company = new Company();
         company.setCompanyName(companyName.trim());
@@ -201,9 +212,13 @@ public class CompanyController {
         if (logoBase64 != null && !logoBase64.isBlank()) {
             company.setLogoBase64(logoBase64);
         }
+        if (floorSeatConfig != null && !floorSeatConfig.isBlank()) {
+            company.setFloorSeatConfig(floorSeatConfig.trim());
+        }
 
         // Save company
         Company saved = companyService.registerCompany(company);
+        workspaceLayoutService.ensureLayoutForCompany(saved);
 
         // Register workspace creator as admin (not in the employee directory)
         userService.registerAdmin(saved.getId(), saved.getOwnerEmail(),
@@ -259,17 +274,17 @@ public class CompanyController {
                         || (ownerEmail != null && ownerEmail.equalsIgnoreCase(u.getEmail())))
                 .collect(java.util.stream.Collectors.toList());
 
-        // Count all active bookings for this company's users across all months
-        long activeBookings = allUsers.stream()
-                .flatMap(e -> bookingService.getAllUserBookings(companyId, e.getEmail()).stream())
-                .count();
+        long activeBookings = bookingService.getActiveBookingCountForCompany(companyId);
+        long totalDesks = workspaceLayoutService.countDesks(companyId);
+        long workspaceFloors = workspaceLayoutService.countSeatFloors(companyId);
 
         model.addAttribute("company", company);
         model.addAttribute("employees", employees);
         model.addAttribute("admins", admins);
-        model.addAttribute("totalSeats", company.getTotalSeats());
+        model.addAttribute("totalSeats", totalDesks);
         model.addAttribute("totalEmployees", allUsers.size());
         model.addAttribute("activeBookingsThisMonth", activeBookings);
+        model.addAttribute("workspaceFloors", workspaceFloors);
         model.addAttribute("username", session.getAttribute("username"));
         model.addAttribute("displayName", session.getAttribute("displayName"));
         model.addAttribute("welcomeMessage", session.getAttribute("welcomeMessage"));
@@ -406,10 +421,16 @@ public class CompanyController {
         Optional<Company> companyOpt = companyService.findByCompanyCode(companyCode.trim());
         if (companyOpt.isPresent()) {
             Company company = companyOpt.get();
-            Optional<User> updatedUserOpt = userService.assignCompanyToUser(username, company.getId());
+            Optional<User> updatedUserOpt = userService.assignCompanyToUser(
+                    username,
+                    company.getId(),
+                    company.getDisplayName(),
+                    "EMPLOYEE");
             if (updatedUserOpt.isPresent()) {
                 session.setAttribute("companyId", company.getId());
                 session.setAttribute("companyOwner", false);
+                session.setAttribute("role", "EMPLOYEE");
+                session.setAttribute("organizationName", company.getDisplayName());
                 redirectAttrs.addFlashAttribute("success", "Successfully joined " + company.getDisplayName() + "!");
                 return "redirect:/dashboard";
             }

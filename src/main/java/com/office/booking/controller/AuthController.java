@@ -92,6 +92,9 @@ public class AuthController {
             session.setAttribute("companyId", user.get().getCompanyId());
             session.setAttribute("companyOwner", false);
             session.setAttribute("role", user.get().getRole());
+            if (user.get().getOrganizationName() != null && !user.get().getOrganizationName().isBlank()) {
+                session.setAttribute("organizationName", user.get().getOrganizationName());
+            }
             return "redirect:/dashboard";
         } else {
             model.addAttribute("error", "Invalid username or password");

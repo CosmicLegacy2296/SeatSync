@@ -122,9 +122,24 @@ public class UserService {
      * @return updated user, or empty if the user doesn't exist.
      */
     public Optional<User> assignCompanyToUser(String email, String companyId) {
+        return assignCompanyToUser(email, companyId, null, null);
+    }
+
+    /**
+     * Updates an existing user's company membership and optional profile fields.
+     *
+     * @return updated user, or empty if the user doesn't exist.
+     */
+    public Optional<User> assignCompanyToUser(String email, String companyId, String organizationName, String role) {
         if (email == null || email.isBlank()) return Optional.empty();
         return userRepository.findById(email).map(u -> {
             u.setCompanyId(companyId);
+            if (organizationName != null && !organizationName.isBlank()) {
+                u.setOrganizationName(organizationName.trim());
+            }
+            if (role != null && !role.isBlank()) {
+                u.setRole(role.trim().toUpperCase());
+            }
             return userRepository.save(u);
         });
     }

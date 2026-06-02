@@ -55,8 +55,31 @@
         <div style="text-align: center; margin-top: 22px;">
             <a th:href="@{/login}" class="form-link">&larr; Back to Login</a>
         </div>
+
+        <div style="text-align: center; margin-top: 14px;">
+            <button type="button" onclick="toggleNoCode()"
+                style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;text-decoration:underline;padding:0;">
+                I don't have an invite code yet
+            </button>
+        </div>
+
+        <div id="noCodeInfo" style="display:none;margin-top:14px;padding:16px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);">
+            <p style="color:var(--text-secondary);font-size:13px;margin:0 0 10px 0;">
+                Ask your workspace admin or company owner for the <strong>6-character invite code</strong>.
+                They can find it on their <strong>Company Dashboard</strong>.
+            </p>
+            <p style="color:var(--text-muted);font-size:12px;margin:0;">
+                Once you have the code, come back here and enter it above to join.
+            </p>
+        </div>
     </div>
 </div>
+<script>
+    function toggleNoCode() {
+        const el = document.getElementById('noCodeInfo');
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
 </body>
 </html>
 

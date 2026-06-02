@@ -36,7 +36,7 @@
                 <span th:text="${error}">Registration Error</span>
             </div>
 
-            <form th:action="@{/register}" method="post" id="registrationForm">
+            <form th:action="@{/register}" method="post" id="registrationForm" novalidate>
                 
                 <!-- Step 1: Company Profile -->
                 <div class="wizard-section active" id="step1">
@@ -127,9 +127,11 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label" for="floorSeatConfig">Floor &amp; Seat Configuration (JSON)</label>
-                        <textarea class="form-control" id="floorSeatConfig" name="floorSeatConfig" rows="3" style="font-family: var(--font-mono); font-size: 13px;" placeholder='{"1":20, "2":20}'>{"1":20, "2":20}</textarea>
-                        <p style="color: var(--text-muted); font-size: 12px; margin-top: 6px;">Define the number of seats per floor. (e.g. Floor 1 has 20 seats)</p>
+                        <label class="form-label">Floor &amp; Seat Configuration</label>
+                        <div id="floorBuilderList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;"></div>
+                        <button type="button" onclick="addFloor()" class="btn btn-secondary" style="width:100%; margin-bottom:6px;">+ Add Floor</button>
+                        <input type="hidden" id="floorSeatConfig" name="floorSeatConfig">
+                        <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Add each floor and set how many seats it has.</p>
                     </div>
 
                     <div style="display: flex; gap: 12px;">
@@ -159,11 +161,12 @@
 
                     <div class="form-group">
                         <label class="form-label" for="ownerPassword">Admin Password *</label>
-                        <input class="form-control" type="password" id="ownerPassword" name="ownerPassword" required placeholder="••••••••" onkeyup="checkPasswordStrength()">
+                        <input class="form-control" type="password" id="ownerPassword" name="ownerPassword" placeholder="••••••••" onkeyup="checkPasswordStrength(); clearPwdError();">
                         <div class="password-strength-bar">
                             <div class="password-strength-fill" id="strengthFill"></div>
                         </div>
                         <p id="strengthText" style="color: var(--text-muted); font-size: 12px; margin-top: 6px;">Enter at least 8 characters</p>
+                        <p id="passwordError" style="color: #e74c3c; font-size: 13px; margin-top: 4px; display: none;">Password must be at least 8 characters.</p>
                     </div>
 
                     <div style="display: flex; gap: 12px;">
@@ -198,6 +201,11 @@
 
         function nextStep(current) {
             if (!validateStep(current)) return;
+
+            // Serialize floor config when leaving step 2
+            if (current === 2) {
+                serializeFloorConfig();
+            }
             
             document.getElementById('step' + current).classList.remove('active');
             document.getElementById('step' + (current + 1)).classList.add('active');
@@ -282,6 +290,73 @@
                 logoPreview.src = base64data;
                 logoPreview.style.display = 'inline-block';
             }
+        }
+
+        // Floor Builder
+        function addFloor() {
+            const list = document.getElementById('floorBuilderList');
+            const n = list.children.length + 1;
+            const card = document.createElement('div');
+            card.dataset.floorCard = n;
+            card.style.cssText = 'display:flex;align-items:center;gap:10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:12px 16px;';
+            card.innerHTML = `
+                <span class="floor-label" style="font-weight:600;white-space:nowrap;min-width:65px;">Floor ${n}</span>
+                <input type="number" class="floor-seats-input" min="1" max="500" value="20"
+                    style="flex:1;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text-primary);font-size:14px;">
+                <span style="color:var(--text-muted);font-size:13px;white-space:nowrap;">seats</span>
+                <button type="button" onclick="removeFloor(this)"
+                    style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:22px;line-height:1;padding:0 4px;"
+                    title="Remove floor">&times;</button>
+            `;
+            list.appendChild(card);
+            updateRemoveButtons();
+        }
+
+        function removeFloor(btn) {
+            btn.closest('[data-floor-card]').remove();
+            relabelFloors();
+            updateRemoveButtons();
+        }
+
+        function relabelFloors() {
+            const cards = document.querySelectorAll('#floorBuilderList [data-floor-card]');
+            cards.forEach((card, i) => {
+                card.querySelector('.floor-label').textContent = 'Floor ' + (i + 1);
+            });
+        }
+
+        function updateRemoveButtons() {
+            const cards = document.querySelectorAll('#floorBuilderList [data-floor-card]');
+            cards.forEach(card => {
+                const btn = card.querySelector('button[title="Remove floor"]');
+                if (btn) btn.style.visibility = cards.length > 1 ? 'visible' : 'hidden';
+            });
+        }
+
+        function serializeFloorConfig() {
+            const inputs = document.querySelectorAll('#floorBuilderList .floor-seats-input');
+            const config = {};
+            inputs.forEach((input, i) => { config[i + 1] = parseInt(input.value) || 20; });
+            document.getElementById('floorSeatConfig').value = JSON.stringify(config);
+        }
+
+        // Initialize with 2 floors on page load
+        addFloor();
+        addFloor();
+
+        // Submit validation
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            serializeFloorConfig();
+            const pwd = document.getElementById('ownerPassword').value;
+            if (pwd.length < 8) {
+                e.preventDefault();
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('ownerPassword').focus();
+            }
+        });
+
+        function clearPwdError() {
+            document.getElementById('passwordError').style.display = 'none';
         }
 
         // Password Strength Meter

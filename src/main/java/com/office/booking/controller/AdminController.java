@@ -74,7 +74,7 @@ public class AdminController {
 
         // Onboard user to the company workspace as an admin if they have no workspace
         if (user.getCompanyId() == null) {
-            userService.assignCompanyToUser(user.getEmail(), company.getId());
+            userService.assignCompanyToUser(user.getEmail(), company.getId(), company.getDisplayName(), "ADMIN");
             userService.promoteToAdmin(user.getEmail());
             user.setCompanyId(company.getId());
             user.setRole("ADMIN");
@@ -137,7 +137,7 @@ public class AdminController {
         int selectedMonth = (month == null || month < 1 || month > 12) ? 2 : month;
 
         List<Booking> bookings = bookingService.getBookingsForMonth(selectedMonth);
-        List<BookingExtensionRequest> pendingExtensionRequests = extensionRequestService.findPendingRequests();
+        List<BookingExtensionRequest> pendingExtensionRequests = java.util.List.of();
 
         // Scope bookings and stats to this company workspace if connected
         String companyName = null;
@@ -150,6 +150,7 @@ public class AdminController {
             bookings = bookings.stream()
                     .filter(b -> adminCompanyId.equals(b.getCompanyId()))
                     .collect(Collectors.toList());
+            pendingExtensionRequests = extensionRequestService.findPendingRequests(adminCompanyId);
             
             Optional<com.office.booking.model.Company> companyOpt = companyService.findById(adminCompanyId);
             if (companyOpt.isPresent()) {
@@ -189,8 +190,15 @@ public class AdminController {
         Optional<com.office.booking.model.Company> companyOpt = companyService.findByCompanyCode(companyCode.trim());
         if (companyOpt.isPresent()) {
             com.office.booking.model.Company company = companyOpt.get();
-            Optional<com.office.booking.model.User> updatedUserOpt = userService.assignCompanyToUser(username, company.getId());
+            Optional<com.office.booking.model.User> updatedUserOpt = userService.assignCompanyToUser(
+                    username,
+                    company.getId(),
+                    company.getDisplayName(),
+                    "ADMIN");
             if (updatedUserOpt.isPresent()) {
+                session.setAttribute("companyId", company.getId());
+                session.setAttribute("role", "ADMIN");
+                session.setAttribute("organizationName", company.getDisplayName());
                 redirectAttrs.addFlashAttribute("success", "Successfully connected Admin Console to workspace: " + company.getDisplayName() + "!");
                 return "redirect:/admin/bookings";
             }
@@ -208,13 +216,14 @@ public class AdminController {
                                      RedirectAttributes redirectAttributes) {
         String username = (String) session.getAttribute("username");
         String role = (String) session.getAttribute("role");
+        String companyId = (String) session.getAttribute("companyId");
 
-        if (username == null || !"ADMIN".equals(role)) {
+        if (username == null || !"ADMIN".equals(role) || companyId == null) {
             return "redirect:/admin-login";
         }
 
         LocalDate bookingDate = LocalDate.parse(date);
-        BookingService.BookingResult result = bookingService.adminDeleteBooking(bookingDate, seatId);
+        BookingService.BookingResult result = bookingService.adminDeleteBooking(companyId, bookingDate, seatId);
 
         if (result.isSuccess()) {
             redirectAttributes.addFlashAttribute("success", result.getMessage());
@@ -228,11 +237,14 @@ public class AdminController {
     @PostMapping("/admin/approve-extension")
     public String approveExtension(@RequestParam long id, HttpSession session, RedirectAttributes redirectAttributes) {
         String role = (String) session.getAttribute("role");
-        if (!"ADMIN".equals(role)) {
+        String companyId = (String) session.getAttribute("companyId");
+        if (!"ADMIN".equals(role) || companyId == null) {
             return "redirect:/admin-login";
         }
         var reqOpt = extensionRequestService.findById(id);
-        if (reqOpt.isEmpty() || !BookingExtensionRequest.PENDING.equals(reqOpt.get().getStatus())) {
+        if (reqOpt.isEmpty()
+                || !BookingExtensionRequest.PENDING.equals(reqOpt.get().getStatus())
+                || !companyId.equals(reqOpt.get().getCompanyId())) {
             redirectAttributes.addFlashAttribute("error", "Request not found or already processed.");
         } else {
             BookingExtensionRequest req = reqOpt.get();
@@ -246,11 +258,14 @@ public class AdminController {
     @PostMapping("/admin/reject-extension")
     public String rejectExtension(@RequestParam long id, HttpSession session, RedirectAttributes redirectAttributes) {
         String role = (String) session.getAttribute("role");
-        if (!"ADMIN".equals(role)) {
+        String companyId = (String) session.getAttribute("companyId");
+        if (!"ADMIN".equals(role) || companyId == null) {
             return "redirect:/admin-login";
         }
         var reqOpt = extensionRequestService.findById(id);
-        if (reqOpt.isEmpty() || !BookingExtensionRequest.PENDING.equals(reqOpt.get().getStatus())) {
+        if (reqOpt.isEmpty()
+                || !BookingExtensionRequest.PENDING.equals(reqOpt.get().getStatus())
+                || !companyId.equals(reqOpt.get().getCompanyId())) {
             redirectAttributes.addFlashAttribute("error", "Request not found or already processed.");
         } else {
             BookingExtensionRequest req = reqOpt.get();
@@ -275,12 +290,15 @@ public class AdminController {
                           HttpServletResponse response) throws IOException {
         String username = (String) session.getAttribute("username");
         String role = (String) session.getAttribute("role");
-        if (username == null || !"ADMIN".equals(role)) {
+        String companyId = (String) session.getAttribute("companyId");
+        if (username == null || !"ADMIN".equals(role) || companyId == null) {
             response.sendRedirect("/admin-login");
             return;
         }
         int selectedMonth = (month < 1 || month > 12) ? 1 : month;
-        List<Booking> bookings = bookingService.getBookingsForMonth(selectedMonth);
+        List<Booking> bookings = bookingService.getBookingsForMonth(selectedMonth).stream()
+                .filter(b -> companyId.equals(b.getCompanyId()))
+                .collect(Collectors.toList());
 
         response.setContentType("text/csv");
         response.setHeader("Content-Disposition",

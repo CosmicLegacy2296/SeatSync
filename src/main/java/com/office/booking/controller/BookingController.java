@@ -93,7 +93,7 @@ public class BookingController {
         model.addAttribute("validation", validation);
         model.addAttribute("username", username);
         model.addAttribute("displayName", session.getAttribute("displayName"));
-        model.addAttribute("maxAllowedDays", extensionRequestService.getApprovedMaxForUserMonthYear(username, month, 2026));
+        model.addAttribute("maxAllowedDays", extensionRequestService.getApprovedMaxForUserMonthYear(companyId, username, month, 2026));
         model.addAttribute("daysInMonth", java.time.Year.of(2026).atMonth(month).lengthOfMonth());
 
         return "calendar";
@@ -108,6 +108,10 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
         if (month < 2 || month > 12) {
             redirectAttributes.addFlashAttribute("error", "Invalid month");
             return "redirect:/dashboard";
@@ -120,7 +124,7 @@ public class BookingController {
             redirectAttributes.addFlashAttribute("error", "Please select at least one date");
             return "redirect:/calendar/" + month;
         }
-        int maxAllowed = extensionRequestService.getApprovedMaxForUserMonthYear(username, month, 2026);
+        int maxAllowed = extensionRequestService.getApprovedMaxForUserMonthYear(companyId, username, month, 2026);
         if (datesList.size() > maxAllowed) {
             redirectAttributes.addFlashAttribute("error", "You may select at most " + maxAllowed + " days.");
             return "redirect:/calendar/" + month;
@@ -138,6 +142,10 @@ public class BookingController {
                                         HttpSession session) {
         String username = (String) session.getAttribute("username");
         if (username == null) {
+            return "redirect:/login";
+        }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
             return "redirect:/login";
         }
         try {
@@ -190,7 +198,7 @@ public class BookingController {
             bookedSeats = new HashSet<>(bookedSeats);
             bookedSeats.remove(currentBooking.getSeatId());
         }
-        List<Floor> floors = bookingService.getFloors();
+        List<Floor> floors = bookingService.getFloors(companyId);
         Map<String, String> assignments = (Map<String, String>) session.getAttribute(SESSION_SEAT_ASSIGNMENTS);
         if (assignments == null) assignments = new LinkedHashMap<>();
         String existingValue = assignments.get(dateStr);
@@ -417,6 +425,10 @@ public class BookingController {
         if (username == null) {
             return "redirect:/login";
         }
+        String companyId = (String) session.getAttribute("companyId");
+        if (companyId == null) {
+            return "redirect:/login";
+        }
         if (month < 2 || month > 12) {
             redirectAttributes.addFlashAttribute("error", "Invalid month");
             return "redirect:/calendar/" + month;
@@ -430,15 +442,15 @@ public class BookingController {
             redirectAttributes.addFlashAttribute("error", "Please enter a valid number of days for this month.");
             return "redirect:/calendar/" + month;
         }
-        if (extensionRequestService.getApprovedMaxForUserMonthYear(username, month, year) != 10) {
+        if (extensionRequestService.getApprovedMaxForUserMonthYear(companyId, username, month, year) != 10) {
             redirectAttributes.addFlashAttribute("error", "You already have an approved extension for this month.");
             return "redirect:/calendar/" + month;
         }
-        if (extensionRequestService.hasPendingRequest(username, month, year)) {
+        if (extensionRequestService.hasPendingRequest(companyId, username, month, year)) {
             redirectAttributes.addFlashAttribute("error", "You already have a pending request for this month.");
             return "redirect:/calendar/" + month;
         }
-        BookingExtensionRequest req = new BookingExtensionRequest(username, requestedDays, month, year);
+        BookingExtensionRequest req = new BookingExtensionRequest(companyId, username, requestedDays, month, year);
         extensionRequestService.save(req);
         redirectAttributes.addFlashAttribute("success", "Request submitted to admin for approval.");
         return "redirect:/calendar/" + month;

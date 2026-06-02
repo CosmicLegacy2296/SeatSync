@@ -44,6 +44,8 @@ public class Company {
     @Column(nullable = false, unique = true)
     private String adminCode;     // short code for admins to join
     private LocalDateTime registeredAt;
+    @Column(columnDefinition = "TEXT")
+    private String floorSeatConfig; // JSON e.g. {"1":20,"2":15}
 
     public Company() {
         this.id = UUID.randomUUID().toString();
@@ -172,6 +174,10 @@ public class Company {
     public String getDisplayName() {
         return (tradingName != null && !tradingName.isBlank()) ? tradingName : companyName;
     }
+
+    /** @return JSON floor/seat config string, e.g. {"1":20,"2":15} */
+    public String getFloorSeatConfig() { return floorSeatConfig; }
+    public void setFloorSeatConfig(String floorSeatConfig) { this.floorSeatConfig = floorSeatConfig; }
 
     /**
      * Returns total bookable seats across both floors.

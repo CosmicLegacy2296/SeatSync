@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Sign Up - SeatSync</title>
+    <title>Create Your SubSync Account - SeatSync</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -22,8 +22,8 @@
                 </svg>
             </a>
             <div>
-                <h1 class="logo-text" style="text-align: center;">Employee Sign Up</h1>
-                <p style="text-align: center;">Create your account, then join using an invite code</p>
+                <h1 class="logo-text" style="text-align: center;">Create Your SubSync Account</h1>
+                <p style="text-align: center;">Create your SubSync account, then join using an invite code</p>
             </div>
         </div>
 
@@ -65,15 +65,17 @@
             <div class="form-group" style="position: relative;">
                 <label class="form-label" for="password">Password *</label>
                 <input class="form-control" id="password" name="password" type="password" required placeholder="At least 8 characters">
+                <span id="pwdError" style="color:#e74c3c;font-size:12px;margin-top:4px;display:none;">Password must be at least 8 characters.</span>
             </div>
 
             <div class="form-group">
                 <label class="form-label" for="confirmPassword">Confirm Password *</label>
                 <input class="form-control" id="confirmPassword" name="confirmPassword" type="password" required placeholder="Re-enter password">
+                <span id="confirmError" style="color:#e74c3c;font-size:12px;margin-top:4px;display:none;">Passwords do not match.</span>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" style="margin-top: 18px;">
-                Continue to Invite Code
+                Create SubSync Account & Continue
             </button>
         </form>
 
@@ -83,5 +85,27 @@
     </div>
 </div>
 </body>
+<script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const pwd = document.getElementById('password').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        let block = false;
+        if (pwd.length < 8) {
+            e.preventDefault();
+            document.getElementById('pwdError').style.display = 'block';
+            block = true;
+        } else {
+            document.getElementById('pwdError').style.display = 'none';
+        }
+        if (pwd !== confirm) {
+            e.preventDefault();
+            document.getElementById('confirmError').style.display = 'block';
+            block = true;
+        } else {
+            document.getElementById('confirmError').style.display = 'none';
+        }
+        if (block) document.getElementById('password').focus();
+    });
+</script>
 </html>
 
