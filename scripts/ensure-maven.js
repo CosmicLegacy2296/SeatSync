@@ -23,6 +23,19 @@ function hasJava() {
   return check.status === 0;
 }
 
+function extractZipOnWindows(zipPath, destinationDir) {
+  // Use PowerShell directly to avoid shell fallback issues on Windows with spaces in paths.
+  const psCommand = `Expand-Archive -Force -Path '${zipPath}' -DestinationPath '${destinationDir}'`;
+  const result = spawnSync('powershell', ['-NoProfile', '-Command', psCommand], {
+    stdio: 'inherit',
+    cwd: projectRoot,
+  });
+
+  if (result.status !== 0) {
+    throw new Error('Failed to extract Maven zip with PowerShell Expand-Archive.');
+  }
+}
+
 if (fs.existsSync(bundledMvn)) {
   process.exit(0);
 }
@@ -46,11 +59,7 @@ try {
     const zipUrl = `https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip`;
     const zipPath = path.join(mavenLocalDir, `apache-maven-${MAVEN_VERSION}-bin.zip`);
     execSync(`curl -fsSL "${zipUrl}" -o "${zipPath}"`, { stdio: 'inherit', cwd: projectRoot });
-    execSync(`tar -xf "${zipPath}" 2>nul || powershell -Command "Expand-Archive -Force '${zipPath}' '${mavenLocalDir}'"`, {
-      stdio: 'inherit',
-      cwd: projectRoot,
-      shell: true,
-    });
+    extractZipOnWindows(zipPath, mavenLocalDir);
   } else {
     execSync(`curl -fsSL "${MAVEN_URL}" | tar -xz -C "${mavenLocalDir}"`, {
       stdio: 'inherit',
