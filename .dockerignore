@@ -1,0 +1,11 @@
+.git
+.github
+.vscode
+target
+node_modules
+maven_local
+apache-maven-3.9.9
+seatSync-db.mv.db
+seatSync-db.trace.db
+.env
+*.log
