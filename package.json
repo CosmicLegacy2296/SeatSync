@@ -5,10 +5,11 @@
   "scripts": {
     "prestart": "node scripts/ensure-maven.js",
     "start": "node scripts/mvn-run.js spring-boot:run -DskipTests",
+    "start:render": "java -jar target/seat-booking-system-1.0.0.jar",
     "predev": "node scripts/ensure-maven.js",
     "start:test": "node scripts/mvn-run.js spring-boot:run",
-    "build": "node scripts/mvn-run.js clean package -DskipTests",
-    "test": "node scripts/mvn-run.js test",
+    "build": "node scripts/ensure-maven.js && node scripts/mvn-run.js clean package -DskipTests",
+    "test": "node scripts/ensure-maven.js && node scripts/mvn-run.js test",
     "dev": "node scripts/mvn-run.js spring-boot:run -DskipTests -Dspring-boot.run.jvmArguments=-Dspring.devtools.restart.enabled=true"
   },
   "engines": {
