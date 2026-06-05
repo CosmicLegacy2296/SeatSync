@@ -11,12 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converts a platform-style DATABASE_URL (postgresql://user:pass@host/db?params)
- * into JDBC_DATABASE_URL / JDBC_DATABASE_DRIVER / JDBC_DATABASE_USERNAME /
- * JDBC_DATABASE_PASSWORD before Spring datasource auto-configuration reads them.
- *
- * This runs whether the app is launched via mvn-run.js or directly as a jar
- * (e.g. inside Docker on Render).
+ * Converts platform DATABASE_URL values to JDBC properties before datasource init.
  */
 public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
 
@@ -29,7 +24,6 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
             return;
         }
 
-        // Already a JDBC URL — nothing to do.
         if (raw.startsWith("jdbc:")) {
             return;
         }
@@ -38,7 +32,6 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
             return;
         }
 
-        // Normalise scheme so java.net.URI can parse it.
         String uriString = raw.startsWith("postgresql://")
                 ? raw.replaceFirst("postgresql://", "postgres://")
                 : raw;
@@ -52,20 +45,24 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
 
         String host = uri.getHost();
         int port = uri.getPort();
-        String path = uri.getPath(); // e.g. /neondb
-        String query = uri.getRawQuery(); // e.g. sslmode=require&channel_binding=require
+        String path = uri.getPath();
+        String query = uri.getRawQuery();
 
         String jdbcBase = port > 0
                 ? "jdbc:postgresql://" + host + ":" + port + path
                 : "jdbc:postgresql://" + host + path;
 
-        String jdbcUrl = (query != null && !query.isBlank())
-                ? jdbcBase + "?" + query
-                : jdbcBase;
+        String schemaQuery = "currentSchema=%22SeatSync%22,public";
+        String jdbcUrl;
+        if (query == null || query.isBlank()) {
+            jdbcUrl = jdbcBase + "?" + schemaQuery;
+        } else if (query.contains("currentSchema=")) {
+            jdbcUrl = jdbcBase + "?" + query;
+        } else {
+            jdbcUrl = jdbcBase + "?" + query + "&" + schemaQuery;
+        }
 
         Map<String, Object> props = new HashMap<>();
-
-        // Only set if not already overridden by an explicit env var.
         setIfAbsent(environment, props, "JDBC_DATABASE_URL", jdbcUrl);
         setIfAbsent(environment, props, "JDBC_DATABASE_DRIVER", "org.postgresql.Driver");
 
@@ -87,7 +84,7 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
     }
 
     private void setIfAbsent(ConfigurableEnvironment env, Map<String, Object> props,
-                              String key, String value) {
+                             String key, String value) {
         if (env.getProperty(key) == null) {
             props.put(key, value);
         }
