@@ -5,8 +5,10 @@ import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
+import java.net.URLDecoder;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,12 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
         if (raw == null || raw.isBlank()) {
             return;
         }
+
+        raw = raw.trim();
+        if (raw.startsWith("DATABASE_URL=")) {
+            raw = raw.substring("DATABASE_URL=".length());
+        }
+        raw = raw.replace("&amp;", "&");
 
         if (raw.startsWith("jdbc:")) {
             return;
@@ -66,14 +74,16 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
         setIfAbsent(environment, props, "JDBC_DATABASE_URL", jdbcUrl);
         setIfAbsent(environment, props, "JDBC_DATABASE_DRIVER", "org.postgresql.Driver");
 
-        String userInfo = uri.getUserInfo();
+        String userInfo = uri.getRawUserInfo();
         if (userInfo != null && !userInfo.isBlank()) {
             int sep = userInfo.indexOf(':');
             if (sep >= 0) {
-                setIfAbsent(environment, props, "JDBC_DATABASE_USERNAME", userInfo.substring(0, sep));
-                setIfAbsent(environment, props, "JDBC_DATABASE_PASSWORD", userInfo.substring(sep + 1));
+            setIfAbsent(environment, props, "JDBC_DATABASE_USERNAME",
+                decodeUrlComponent(userInfo.substring(0, sep)));
+            setIfAbsent(environment, props, "JDBC_DATABASE_PASSWORD",
+                decodeUrlComponent(userInfo.substring(sep + 1)));
             } else {
-                setIfAbsent(environment, props, "JDBC_DATABASE_USERNAME", userInfo);
+            setIfAbsent(environment, props, "JDBC_DATABASE_USERNAME", decodeUrlComponent(userInfo));
             }
         }
 
@@ -88,5 +98,13 @@ public class DatabaseUrlNormalizer implements EnvironmentPostProcessor {
         if (env.getProperty(key) == null) {
             props.put(key, value);
         }
+    }
+
+    private String decodeUrlComponent(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        // Preserve literal '+' while still decoding percent-encoded values.
+        return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
     }
 }
