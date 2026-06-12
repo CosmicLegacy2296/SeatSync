@@ -114,6 +114,36 @@
                                 <span th:text="${company.companySize} + ' Employees'">Size</span>
                             </span>
                         </p>
+                        <p style="color: var(--text-secondary); display: flex; align-items: center; gap: 16px; font-size: 15px; margin-top: 8px;">
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span th:text="${company.ownerName}">Owner</span>
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                </svg>
+                                <span th:text="${company.ownerTitle}">Title</span>
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                <span th:text="${company.ownerEmail}">Email</span>
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                </svg>
+                                <code style="background: rgba(74, 222, 128, 0.15); padding: 4px 8px; border-radius: 4px; color: var(--accent-primary); font-family: var(--font-mono); font-size: 13px;" th:text="${company.companyCode}">CODE</code>
+                            </span>
+                        </p>
                     </div>
                 </div>
 

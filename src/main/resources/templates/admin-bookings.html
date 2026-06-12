@@ -78,6 +78,45 @@
         <main class="main-content">
             <div class="container">
                 
+                <!-- Admin Summary Card -->
+                <div th:if="${hasWorkspace}" class="card" style="margin-bottom: 32px; background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.04)); border-color: rgba(245, 158, 11, 0.15);">
+                    <div style="display: flex; align-items: center; gap: 24px;">
+                        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-warn); font-size: 24px; font-weight: 800; flex-shrink: 0;" th:text="${session.displayName != null} ? ${#strings.substring(session.displayName, 0, 1).toUpperCase()} : ${#strings.substring(username, 0, 1).toUpperCase()}">A</div>
+                        <div style="flex: 1;">
+                            <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;" th:text="${session.displayName != null} ? ${session.displayName} : ${username}">Admin Name</h2>
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--text-secondary);">
+                                <span style="display: flex; align-items: center; gap: 6px;">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <span th:text="${session.companyOwner} ? 'Workspace Owner' : 'Workspace Admin'">Workspace Admin</span>
+                                </span>
+                                <span style="display: flex; align-items: center; gap: 6px;">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </svg>
+                                    <span th:text="${username}">admin@company.com</span>
+                                </span>
+                                <span style="display: flex; align-items: center; gap: 6px;">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    </svg>
+                                    <span th:text="${companyName}">Workspace Name</span>
+                                </span>
+                                <span style="display: flex; align-items: center; gap: 6px;">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                    </svg>
+                                    <code style="background: rgba(245, 158, 11, 0.15); padding: 4px 8px; border-radius: 4px; color: var(--accent-warn); font-family: var(--font-mono); font-size: 12px;" th:text="${companyCode}">CODE</code>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Connect Workspace Widget for admin if not linked -->
                 <div th:if="${!hasWorkspace}" class="card" style="margin-bottom: 32px; border-color: rgba(245, 158, 11, 0.3); background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.02));">
                     <div style="display: flex; align-items: center; gap: 16px;">

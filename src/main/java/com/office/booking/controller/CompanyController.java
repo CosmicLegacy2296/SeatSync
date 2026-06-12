@@ -53,7 +53,7 @@ public class CompanyController {
     }
 
     /**
-     * Authenticates a company owner by their registered email and password.
+     * Authenticates a company owner by their registered email, username, or password.
      * Sets session attributes and redirects to the company dashboard on success.
      */
     @PostMapping("/company-login")
@@ -62,8 +62,18 @@ public class CompanyController {
                                HttpSession session,
                                Model model) {
         Optional<Company> companyOpt = companyService.findByOwnerEmail(ownerEmail.trim().toLowerCase());
+        
+        // Fallback: try to find user by display name/username, then lookup company by their email
+        if (companyOpt.isEmpty()) {
+            Optional<User> userOpt = userService.findByEmailOrDisplayName(ownerEmail.trim());
+            if (userOpt.isPresent()) {
+                String userEmail = userOpt.get().getEmail();
+                companyOpt = companyService.findByOwnerEmail(userEmail.trim().toLowerCase());
+            }
+        }
+        
         if (companyOpt.isEmpty() || !companyOpt.get().getOwnerPassword().equals(ownerPassword)) {
-            model.addAttribute("error", "Invalid email or password. Please try again.");
+            model.addAttribute("error", "Invalid email, username, or password. Please try again.");
             return "company-login";
         }
 
