@@ -19,17 +19,21 @@ public class UserService {
 
     private void seedDefaultUsersIfNeeded() {
         // Seed basic accounts so the UI doesn't break on first run.
-        createUserIfNotExists("user1@seatsync.dev", "password1", "John Doe");
-        createUserIfNotExists("user2@seatsync.dev", "password2", "Jane Smith");
-        createUserIfNotExists("user3@seatsync.dev", "password3", "User Three");
+        // These are legacy/dev accounts and are not tied to a company (companyId stays null).
+        createUserIfNotExists("employee@seatsync.dev", "password1", "Employee One", "EMPLOYEE");
+        createUserIfNotExists("admin@seatsync.dev", "password2", "Admin One", "ADMIN");
+        createUserIfNotExists("owner@seatsync.dev", "password3", "Owner One", "OWNER");
     }
 
-    private void createUserIfNotExists(String email, String password, String name) {
+    private void createUserIfNotExists(String email, String password, String name, String role) {
         if (email == null || email.isBlank()) return;
         if (!userRepository.existsById(email)) {
-            userRepository.save(new User(email, password, name));
+            User user = new User(email, password, name);
+            user.setRole(role == null ? "EMPLOYEE" : role.trim().toUpperCase());
+            userRepository.save(user);
         }
     }
+
 
     public void logout(String email) {
         // No persisted "logged in" state; session controls auth.

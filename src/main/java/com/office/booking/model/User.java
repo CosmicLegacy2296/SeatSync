@@ -7,7 +7,7 @@ import jakarta.persistence.Transient;
 import java.util.Objects;
 
 @Entity
-@Table(name = "seatsync_membership")
+@Table(name = "seatsync_membership", schema = "seatsync")
 public class User {
     @Id
     private String email;
