@@ -52,13 +52,21 @@ public class AuthController {
                        @RequestParam String password,
                        HttpSession session,
                        Model model) {
-        String normalizedUsername = username == null ? "" : username.trim().toLowerCase();
-        if (normalizedUsername.isBlank() || password == null || password.isBlank()) {
+        String trimmedUsername = username == null ? "" : username.trim();
+        if (trimmedUsername.isBlank() || password == null || password.isBlank()) {
             model.addAttribute("error", "Invalid username or password");
             return "login";
         }
 
-        Optional<User> user = userService.login(normalizedUsername, password);
+        // Try login with original input first (preserves case for usernames)
+        Optional<User> user = userService.login(trimmedUsername, password);
+        
+        // If that fails, try with lowercase for email case-insensitivity
+        if (user.isEmpty()) {
+            String lowercaseUsername = trimmedUsername.toLowerCase();
+            user = userService.login(lowercaseUsername, password);
+        }
+        
         if (user.isPresent()) {
             session.setAttribute("username", user.get().getEmail());
             session.setAttribute("displayName", user.get().getDisplayName());

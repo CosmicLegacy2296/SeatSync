@@ -64,8 +64,17 @@ public class AdminController {
         }
         com.office.booking.model.Company company = companyOpt.get();
 
-        String normalizedUsername = username == null ? "" : username.trim().toLowerCase();
-        var userOpt = userService.login(normalizedUsername, password);
+        String trimmedUsername = username == null ? "" : username.trim();
+        
+        // Try login with original input first (preserves case for usernames)
+        var userOpt = userService.login(trimmedUsername, password);
+        
+        // If that fails, try with lowercase for email case-insensitivity
+        if (userOpt.isEmpty()) {
+            String lowercaseUsername = trimmedUsername.toLowerCase();
+            userOpt = userService.login(lowercaseUsername, password);
+        }
+        
         if (userOpt.isEmpty()) {
             model.addAttribute("error", "Invalid email or password.");
             return "admin-login";
