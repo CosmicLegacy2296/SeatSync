@@ -6,14 +6,24 @@ public class QueryDb {
         String url = "jdbc:h2:./seatSync-db;MODE=PostgreSQL";
         Connection conn = DriverManager.getConnection(url, "sa", "");
         Statement stmt = conn.createStatement();
-        
-        // Get all user tables (not system tables)
-        System.out.println("=== All User Tables ===");
-        ResultSet rs = stmt.executeQuery(
-            "SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='TABLE' ORDER BY TABLE_SCHEMA, TABLE_NAME"
-        );
-        while (rs.next()) {
-            System.out.println(rs.getString("TABLE_SCHEMA") + "." + rs.getString("TABLE_NAME"));
+
+        try {
+            System.out.println("=== SEATSYNC_MEMBERSHIP table ===");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM \"SeatSync\".\"SEATSYNC_MEMBERSHIP\"");
+            ResultSetMetaData meta = rs.getMetaData();
+            int cols = meta.getColumnCount();
+            for (int i = 1; i <= cols; i++) {
+                System.out.print(meta.getColumnName(i) + "\t");
+            }
+            System.out.println();
+            while (rs.next()) {
+                for (int i = 1; i <= cols; i++) {
+                    System.out.print(rs.getString(i) + "\t");
+                }
+                System.out.println();
+            }
+        } catch (Exception e) {
+            System.out.println("Error reading SEATSYNC_MEMBERSHIP: " + e.getMessage());
         }
         
         conn.close();
