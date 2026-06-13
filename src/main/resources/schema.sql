@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS "SeatSync"@@
+CREATE SCHEMA IF NOT EXISTS seatsync@@
 
-CREATE TABLE IF NOT EXISTS "SeatSync".seatsync_membership (
+CREATE TABLE IF NOT EXISTS seatsync.seatsync_membership (
     email VARCHAR(255) PRIMARY KEY,
     password VARCHAR(255),
     name VARCHAR(255),
@@ -18,7 +18,7 @@ BEGIN
         FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'users'
     ) THEN
-        INSERT INTO "SeatSync".seatsync_membership (
+        INSERT INTO seatsync.seatsync_membership (
             email, password, name, display_name,
             max_allowed_days, company_id, organization_name, role
         )
@@ -46,7 +46,7 @@ BEGIN
         FROM information_schema.tables
         WHERE table_schema = 'seatsync' AND table_name = 'users'
     ) THEN
-        INSERT INTO "SeatSync".seatsync_membership (
+        INSERT INTO seatsync.seatsync_membership (
             email, password, name, display_name,
             max_allowed_days, company_id, organization_name, role
         )
