@@ -191,7 +191,7 @@ CREATE OR REPLACE VIEW seatsync.organization_stats AS
 SELECT 
     c.id AS company_id,
     c.company_name,
-    c.display_name AS company_display_name,
+    CASE WHEN c.trading_name IS NOT NULL AND c.trading_name != '' THEN c.trading_name ELSE c.company_name END AS company_display_name,
     c.company_code AS employee_join_code,
     c.admin_code AS admin_join_code,
     c.industry,
