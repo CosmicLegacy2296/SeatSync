@@ -64,6 +64,10 @@ public class UserService {
         if (user.isEmpty()) {
             user = userRepository.findByDisplayName(loginId);
         }
+        if (user.isEmpty()) {
+            // Also try to find by name field
+            user = userRepository.findByNameIgnoreCase(loginId);
+        }
         return user.filter(u -> u.getPassword() != null && u.getPassword().equals(password));
     }
 
